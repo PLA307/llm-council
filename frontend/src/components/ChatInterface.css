@@ -1,0 +1,1355 @@
+.chat-interface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 悬浮导航菜单 */
+.floating-nav {
+  position: absolute;
+  top: 24px;
+  right: 40px;
+  z-index: 100;
+}
+
+.nav-icon {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+/* 深色主题下的悬浮导航 */
+.app.dark .nav-icon {
+  background: rgba(45, 45, 45, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.nav-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 汉堡菜单线条 - 使用box-shadow创建三条横线 */
+.nav-lines {
+  width: 16px;
+  height: 2px;
+  background: #666;
+  border-radius: 1px;
+  position: relative;
+  box-shadow: 
+    0 5px 0 #666,
+    0 -5px 0 #666;
+  transition: all 0.3s ease;
+}
+
+/* 深色主题下的线条颜色 */
+.app.dark .nav-lines {
+  background: #aaa;
+  box-shadow: 
+    0 5px 0 #aaa,
+    0 -5px 0 #aaa;
+}
+
+/* 悬停时显示的导航提示 */
+.nav-tooltip {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.95);
+  transform-origin: right center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(224, 224, 224, 0.5);
+  pointer-events: auto;
+  z-index: 1000;
+}
+
+/* 深色主题下的提示框 */
+.app.dark .nav-tooltip {
+  background: rgba(45, 45, 45, 0.95);
+  border: 1px solid rgba(85, 85, 85, 0.5);
+}
+
+/* 显示提示框 */
+.nav-icon:hover .nav-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* 导航项目列表 */
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 导航项目 */
+.nav-item {
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+}
+
+/* 主导航项目 */
+.main-nav-item {
+  padding: 8px 16px;
+}
+
+/* 导航子菜单 */
+.nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding-left: 16px;
+}
+
+/* 导航子项 */
+.nav-subitem {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: rgba(240, 240, 240, 0.5);
+  border: 1px solid transparent;
+}
+
+/* 深色主题下的导航子项 */
+.app.dark .nav-subitem {
+  color: #aaa;
+  background: rgba(85, 85, 85, 0.3);
+}
+
+/* 导航子项悬停效果 */
+.nav-subitem:hover {
+  background: rgba(74, 144, 226, 0.15);
+  border-color: rgba(74, 144, 226, 0.3);
+  color: #333;
+  transform: translateX(-2px);
+}
+
+/* 深色主题下的导航子项悬停效果 */
+.app.dark .nav-subitem:hover {
+  background: rgba(58, 123, 200, 0.2);
+  border-color: rgba(58, 123, 200, 0.4);
+  color: #e0e0e0;
+}
+
+/* 导航子项标题 */
+.nav-subitem-title {
+  font-weight: 500;
+}
+
+/* 深色主题下的导航项目 */
+.app.dark .nav-item {
+  color: #e0e0e0;
+}
+
+.nav-item:hover {
+  background: rgba(74, 144, 226, 0.1);
+  border-color: rgba(74, 144, 226, 0.3);
+  transform: translateX(-4px);
+}
+
+/* 深色主题下的悬停效果 */
+.app.dark .nav-item:hover {
+  background: rgba(58, 123, 200, 0.1);
+  border-color: rgba(58, 123, 200, 0.3);
+}
+
+/* 导航分隔线 */
+.nav-item:not(:last-child) {
+  border-bottom: 1px solid rgba(224, 224, 224, 0.3);
+}
+
+.app.dark .nav-item:not(:last-child) {
+  border-bottom-color: rgba(85, 85, 85, 0.3);
+}
+
+/* 导航项目标题 */
+.nav-item-title {
+  font-weight: 500;
+}
+
+/* 导航项目悬浮卡片 */
+.nav-item-tooltip,
+.nav-subitem-tooltip {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+  transform-origin: right center;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  min-width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(224, 224, 224, 0.5);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* 深色主题下的悬浮卡片 */
+.app.dark .nav-item-tooltip,
+.app.dark .nav-subitem-tooltip {
+  background: rgba(45, 45, 45, 0.95);
+  border: 1px solid rgba(85, 85, 85, 0.5);
+}
+
+/* 悬浮卡片箭头 */
+.nav-item-tooltip::before,
+.nav-subitem-tooltip::before {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 深色主题下的箭头 */
+.app.dark .nav-item-tooltip::before,
+.app.dark .nav-subitem-tooltip::before {
+  border-left-color: rgba(45, 45, 45, 0.95);
+}
+
+/* 导航项目悬停时显示悬浮卡片 */
+.nav-item:hover .nav-item-tooltip,
+.nav-subitem:hover .nav-subitem-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1);
+  right: calc(100% + 8px);
+}
+
+/* 悬浮卡片内容 */
+.tooltip-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 深色主题下的标题 */
+.app.dark .tooltip-content h4 {
+  color: #e0e0e0;
+}
+
+.tooltip-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* 深色主题下的文本 */
+.app.dark .tooltip-content p {
+  color: #aaa;
+}
+
+/* 添加平滑滚动支持 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 主内容区滚动条样式 */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  /* 滚动条样式 - 与侧边栏保持一致 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+/* Webkit滚动条样式 */
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.5);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.7);
+}
+
+/* 深色模式下的主内容区滚动条样式 */
+.app.dark .messages-container {
+  scrollbar-color: rgba(85, 85, 85, 0.8) transparent;
+}
+
+.app.dark .messages-container::-webkit-scrollbar-thumb {
+  background: rgba(85, 85, 85, 0.8);
+}
+
+.app.dark .messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 1);
+}
+
+/* 输入框滚动条样式 */
+.message-input {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+.message-input::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-input::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.message-input::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.5);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.7);
+}
+
+/* 深色模式下的输入框滚动条样式 */
+.app.dark .message-input {
+  scrollbar-color: rgba(85, 85, 85, 0.8) transparent;
+}
+
+.app.dark .message-input::-webkit-scrollbar-thumb {
+  background: rgba(85, 85, 85, 0.8);
+}
+
+.app.dark .message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 1);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  text-align: center;
+}
+
+.empty-state h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.message-group {
+  margin-bottom: 32px;
+}
+
+.user-message,
+.assistant-message {
+  margin-bottom: 16px;
+}
+
+.message-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-message .message-content {
+  background: #f0f7ff;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #d0e7ff;
+  color: #333;
+  line-height: 1.6;
+  max-width: 80%;
+  white-space: pre-wrap;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+.stage-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #4a90e2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-top: 1px solid #e0e0e0;
+  background: #fafafa;
+  position: relative;
+  min-height: auto;
+  transition: min-height 0.3s ease;
+  box-sizing: border-box;
+}
+
+.input-area {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  position: relative;
+  align-items: flex-end;
+  flex: 0;
+}
+
+/* 将textarea定位到"2位置" */
+.message-input {
+  align-self: stretch;
+  margin: 0;
+  transition: all 0.3s ease;
+  resize: vertical;
+  min-height: auto;
+  height: auto;
+  flex: 1;
+}
+
+/* 发送上传容器定位到右侧 */
+.send-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  width: auto;
+  position: relative;
+  height: 100%;
+}
+
+/* 圆形样式 */
+.circular {
+  border-radius: 50% !important;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+/* 上传区域圆形样式 */
+.upload-area.circular {
+  border-width: 2px;
+  padding: 0;
+  min-height: 48px;
+  max-width: 48px;
+  background: rgba(245, 245, 245, 0.5);
+  margin-top: 8px;
+}
+
+.upload-area.circular:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.upload-area.circular.dragging {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+}
+
+.upload-area.circular .upload-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.upload-area.circular .upload-icon {
+  font-size: 24px;
+  margin: 0;
+}
+
+.upload-area.circular .upload-text {
+  display: none;
+}
+
+/* 发送按钮圆形样式 */
+.send-button.circular {
+  padding: 0;
+  width: 48px;
+  height: 48px;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.send-button.circular:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+/* 深色主题下的圆形样式 */
+.app.dark .upload-area.circular {
+  background: rgba(85, 85, 85, 0.5);
+}
+
+.app.dark .upload-area.circular:hover {
+  box-shadow: 0 4px 12px rgba(58, 123, 200, 0.4);
+}
+
+.app.dark .upload-area.circular.dragging {
+  box-shadow: 0 0 0 3px rgba(58, 123, 200, 0.4);
+}
+
+.app.dark .send-button.circular:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(58, 123, 200, 0.5);
+}
+
+.message-input {
+  flex: 1;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  color: #333;
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 300px;
+}
+
+.message-input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.message-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+.send-button {
+  padding: 14px 28px;
+  background: #4a90e2;
+  border: 1px solid #4a90e2;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #357abd;
+  border-color: #357abd;
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #ccc;
+  border-color: #ccc;
+}
+
+/* 深色主题样式 */
+.app.dark .chat-interface {
+  background: #1a1a1a;
+}
+
+.app.dark .empty-state {
+  color: #999;
+}
+
+.app.dark .empty-state h2 {
+  color: #e0e0e0;
+}
+
+.app.dark .empty-state p {
+  color: #999;
+}
+
+.app.dark .message-label {
+  color: #999;
+}
+
+.app.dark .user-message .message-content {
+  background: #1e3a5f;
+  border-color: #3a7bc8;
+  color: #e0e0e0;
+}
+
+.app.dark .loading-indicator {
+  color: #999;
+}
+
+.app.dark .stage-loading {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #999;
+}
+
+.app.dark .spinner {
+  border-color: #444;
+  border-top-color: #3a7bc8;
+}
+
+.app.dark .input-form {
+  border-top-color: #444;
+  background: #2d2d2d;
+}
+
+.app.dark .message-input {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .message-input:focus {
+  border-color: #3a7bc8;
+  box-shadow: 0 0 0 3px rgba(58, 123, 200, 0.2);
+}
+
+.app.dark .message-input:disabled {
+  background: #444;
+}
+
+.app.dark .send-button {
+  background: #3a7bc8;
+  border-color: #3a7bc8;
+}
+
+.app.dark .send-button:hover:not(:disabled) {
+  background: #2d6099;
+  border-color: #2d6099;
+}
+
+.app.dark .send-button:disabled {
+  background: #555;
+  border-color: #555;
+}
+
+/* 引用指示器样式 */
+.quoted-indicator {
+  background: rgba(74, 144, 226, 0.1);
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  width: calc(100% - 24px);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 200px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.quoted-indicator.hidden {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  padding: 0 12px;
+  margin-bottom: 0;
+  border: none;
+}
+
+/* 引用头部 */
+.quoted-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* 引用图标 */
+.quoted-icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+/* 引用标题 */
+.quoted-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a90e2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 清除所有引用按钮 */
+.clear-all-quotes-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-all-quotes-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+  color: #333;
+}
+
+/* 引用列表 */
+.quoted-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 引用项 */
+.quoted-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  position: relative;
+}
+
+/* 引用标记 */
+.quoted-marker {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a90e2;
+  background: rgba(74, 144, 226, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* 引用预览 */
+.quoted-preview {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+  flex: 1;
+  margin-right: 20px;
+}
+
+/* 清除单条引用按钮 */
+.clear-quote-item-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.clear-quote-item-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #666;
+}
+
+/* 带有引用的输入框 */
+.message-input.has-quoted {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+}
+
+/* 深色主题下的引用指示器 */
+.app.dark .quoted-indicator {
+  background: rgba(58, 123, 200, 0.1);
+  border-color: rgba(58, 123, 200, 0.3);
+}
+
+.app.dark .quoted-title {
+  color: #3a7bc8;
+}
+
+.app.dark .clear-all-quotes-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.app.dark .clear-all-quotes-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e0e0e0;
+}
+
+.app.dark .quoted-item {
+  background: rgba(85, 85, 85, 0.3);
+}
+
+.app.dark .quoted-marker {
+  color: #3a7bc8;
+  background: rgba(58, 123, 200, 0.2);
+}
+
+.app.dark .quoted-preview {
+  color: #aaa;
+}
+
+.app.dark .clear-quote-item-btn {
+  color: #666;
+}
+
+.app.dark .clear-quote-item-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+/* 文件上传相关样式 */
+
+/* 拖放区域 - 优化尺寸 */
+.upload-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  background: rgba(245, 245, 245, 0.5);
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+  text-align: center;
+  min-height: 60px;
+}
+
+.upload-area:hover {
+  border-color: #4a90e2;
+  background: rgba(74, 144, 226, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.upload-area.dragging {
+  border-color: #4a90e2;
+  background: rgba(74, 144, 226, 0.2);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+.upload-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.upload-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.upload-text {
+  flex: 1;
+  text-align: left;
+}
+
+.upload-main-text {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.upload-hint {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #999;
+  flex-wrap: wrap;
+}
+
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 上传状态 */
+.upload-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.upload-status.loading {
+  background: rgba(255, 248, 220, 0.8);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #666;
+}
+
+.upload-status.success {
+  background: rgba(220, 252, 231, 0.8);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+}
+
+.upload-status.error {
+  background: rgba(255, 228, 225, 0.8);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+}
+
+.status-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.progress-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4a90e2;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #999;
+  text-align: right;
+}
+
+.success-icon {
+  font-size: 18px;
+}
+
+.success-message {
+  flex: 1;
+  font-weight: 500;
+}
+
+.error-icon {
+  font-size: 18px;
+}
+
+.error-message {
+  flex: 1;
+  font-weight: 500;
+}
+
+.retry-btn {
+  padding: 6px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #c82333;
+}
+
+/* 已上传文件列表 */
+.uploaded-files-list {
+  background: rgba(74, 144, 226, 0.05);
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.uploaded-files-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.files-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a90e2;
+}
+
+.clear-all-btn {
+  background: none;
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #4a90e2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-all-btn:hover {
+  background: rgba(74, 144, 226, 0.1);
+}
+
+.files-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* 文件使用指南 */
+.file-usage-guide {
+  background: rgba(74, 144, 226, 0.05);
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.guide-title {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #4a90e2;
+  font-size: 14px;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.guide-list li {
+  margin-bottom: 4px;
+}
+
+/* 文件项 */
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  border-color: #4a90e2;
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.15);
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.file-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.file-number {
+  font-weight: 600;
+  color: #4a90e2;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  font-size: 11px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.file-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.insert-file-btn {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.insert-file-btn:hover {
+  background: #357abd;
+}
+
+.remove-file-btn {
+  background: none;
+  color: #999;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-file-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+/* 深色主题下的文件上传样式 */
+.app.dark .upload-area {
+  border-color: #444;
+  background: rgba(85, 85, 85, 0.3);
+  color: #aaa;
+}
+
+.app.dark .upload-area:hover {
+  border-color: #3a7bc8;
+  background: rgba(58, 123, 200, 0.2);
+}
+
+.app.dark .upload-area.dragging {
+  border-color: #3a7bc8;
+  background: rgba(58, 123, 200, 0.3);
+  box-shadow: 0 0 0 3px rgba(58, 123, 200, 0.2);
+}
+
+.app.dark .upload-hint {
+  color: #666;
+}
+
+.app.dark .upload-status.loading {
+  background: rgba(255, 248, 220, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #aaa;
+}
+
+.app.dark .upload-status.success {
+  background: rgba(220, 252, 231, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.app.dark .upload-status.error {
+  background: rgba(255, 228, 225, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+}
+
+.app.dark .progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app.dark .progress-fill {
+  background: #3a7bc8;
+}
+
+/* 深色主题下的已上传文件列表 */
+.app.dark .uploaded-files-list {
+  background: rgba(58, 123, 200, 0.1);
+  border-color: rgba(58, 123, 200, 0.3);
+}
+
+.app.dark .uploaded-files-header {
+  border-bottom-color: rgba(58, 123, 200, 0.3);
+}
+
+.app.dark .files-title {
+  color: #3a7bc8;
+}
+
+.app.dark .clear-all-btn {
+  border-color: rgba(58, 123, 200, 0.3);
+  color: #3a7bc8;
+}
+
+.app.dark .clear-all-btn:hover {
+  background: rgba(58, 123, 200, 0.2);
+}
+
+/* 深色主题下的文件使用指南 */
+.app.dark .file-usage-guide {
+  background: rgba(58, 123, 200, 0.1);
+  border-color: rgba(58, 123, 200, 0.3);
+}
+
+.app.dark .guide-title {
+  color: #3a7bc8;
+}
+
+.app.dark .guide-list {
+  color: #aaa;
+}
+
+/* 深色主题下的文件项 */
+.app.dark .file-item {
+  background: #3d3d3d;
+  border-color: #555;
+}
+
+.app.dark .file-item:hover {
+  border-color: #3a7bc8;
+  box-shadow: 0 2px 6px rgba(58, 123, 200, 0.2);
+}
+
+.app.dark .file-number {
+  color: #3a7bc8;
+}
+
+.app.dark .file-name {
+  color: #e0e0e0;
+}
+
+.app.dark .file-size {
+  color: #888;
+}
+
+.app.dark .insert-file-btn {
+  background: #3a7bc8;
+  border-color: #3a7bc8;
+}
+
+.app.dark .insert-file-btn:hover {
+  background: #2d6099;
+}
+
+.app.dark .remove-file-btn {
+  color: #888;
+  border-color: #555;
+}
+
+.app.dark .remove-file-btn:hover {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border-color: #dc3545;
+}

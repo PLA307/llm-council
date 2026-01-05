@@ -1,0 +1,185 @@
+.stage3 {
+  background: #f0fff0;
+  border-color: #c8e6c8;
+}
+
+.final-response {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #c8e6c8;
+  position: relative;
+}
+
+.chairman-label {
+  color: #2d8a2d;
+  font-size: 12px;
+  font-family: monospace;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.final-text {
+  color: #333;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* 功能按钮容器 */
+.final-response-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+/* 功能按钮 */
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* 按钮悬停效果 */
+.action-btn:hover {
+  background: rgba(74, 144, 226, 0.8);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 复制按钮 */
+.copy-btn {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* 复制成功状态 */
+.copy-btn.copied {
+  background: rgba(40, 167, 69, 0.8);
+  color: white;
+}
+
+/* 引用按钮 */
+.quote-btn {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* 引用成功状态 */
+.quote-btn.quoted {
+  background: rgba(74, 144, 226, 0.8);
+  color: white;
+}
+
+/* 重新生成按钮 */
+.regenerate-btn {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* 重新生成中状态 */
+.regenerate-btn.regenerating {
+  background: rgba(255, 193, 7, 0.8);
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 功能图标 */
+.action-icon {
+  font-size: 16px;
+}
+
+/* 操作提示框 */
+.action-tooltip {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-right: 6px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* 引用状态的最终回复 */
+.final-response.quoted {
+  background: rgba(240, 255, 240, 0.95);
+  border-left: 4px solid #4caf50;
+  padding-left: 16px;
+}
+
+/* 深色主题样式 */
+.app.dark .stage3 {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+.app.dark .final-response {
+  background: #3d3d3d;
+  border-color: #555;
+}
+
+.app.dark .chairman-label {
+  color: #4caf50;
+  font-size: 12px;
+}
+
+.app.dark .final-text {
+  color: #e0e0e0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.app.dark .action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+.app.dark .action-btn:hover {
+  background: rgba(58, 123, 200, 0.8);
+  color: white;
+}
+
+.app.dark .copy-btn.copied {
+  background: rgba(40, 167, 69, 0.8);
+}
+
+.app.dark .quote-btn.quoted {
+  background: rgba(58, 123, 200, 0.8);
+}
+
+.app.dark .final-response.quoted {
+  background: rgba(40, 167, 69, 0.1);
+  border-left-color: #4caf50;
+}
+
+.app.dark .action-tooltip {
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
+}

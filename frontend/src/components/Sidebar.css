@@ -1,0 +1,826 @@
+.sidebar {
+  width: 260px;
+  background: #f8f8f8;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: space-between;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sidebar-header h1 {
+  font-size: 18px;
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  transition: all 0.3s ease;
+  flex-wrap: nowrap;
+}
+
+.new-conversation-btn {
+  flex: 1;
+  padding: 10px;
+  background: #4a90e2;
+  border: 1px solid #4a90e2;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.new-conversation-btn:hover {
+  background: #357abd;
+  border-color: #357abd;
+}
+
+/* 深色主题样式 */
+.app.dark .sidebar {
+  background: #2d2d2d;
+  border-right-color: #444;
+}
+
+.app.dark .sidebar-header {
+  border-bottom-color: #444;
+}
+
+.app.dark .sidebar-header h1 {
+  color: #e0e0e0;
+}
+
+.app.dark .new-conversation-btn {
+  background: #3a7bc8;
+  border-color: #3a7bc8;
+}
+
+.app.dark .new-conversation-btn:hover {
+  background: #2d6099;
+  border-color: #2d6099;
+}
+
+.app.dark .no-conversations {
+  color: #999;
+}
+
+.app.dark .conversation-item {
+  color: #e0e0e0;
+}
+
+.app.dark .conversation-item:hover {
+  background: #3a3a3a;
+}
+
+.app.dark .conversation-item.active {
+  background: #1e3a5f;
+  border-color: #3a7bc8;
+}
+
+.app.dark .conversation-title {
+  color: #e0e0e0;
+}
+
+.app.dark .conversation-meta {
+  color: #999;
+}
+
+/* 对话标题编辑样式 */
+.conversation-title {
+  cursor: pointer;
+}
+
+.title-edit-container {
+  display: flex;
+  width: 100%;
+}
+
+.title-edit-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  font-size: 14px;
+  outline: none;
+}
+
+.app.dark .title-edit-input {
+  background-color: #333;
+  color: #e0e0e0;
+  border-color: #5e5e5e;
+}
+
+.title-edit-input:focus {
+  border-color: #2378d5;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.app.dark .title-edit-input:focus {
+  border-color: #7a7a7a;
+  box-shadow: 0 0 0 2px rgba(94, 94, 94, 0.2);
+}
+
+.conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  width: 100%;
+  /* 滚动条样式优化 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+/* Webkit滚动条样式 */
+.conversation-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversation-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.conversation-list::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.5);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.conversation-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.7);
+}
+
+/* 深色模式下的滚动条样式 */
+.app.dark .conversation-list {
+  scrollbar-color: rgba(85, 85, 85, 0.8) transparent;
+}
+
+.app.dark .conversation-list::-webkit-scrollbar-thumb {
+  background: rgba(85, 85, 85, 0.8);
+}
+
+.app.dark .conversation-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 1);
+}
+
+/* 设置面板滚动条样式 */
+.settings-panel {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+.settings-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.5);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.settings-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.7);
+}
+
+/* 深色模式下的设置面板滚动条样式 */
+.app.dark .settings-panel {
+  scrollbar-color: rgba(85, 85, 85, 0.8) transparent;
+}
+
+.app.dark .settings-panel::-webkit-scrollbar-thumb {
+  background: rgba(85, 85, 85, 0.8);
+}
+
+.app.dark .settings-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 1);
+}
+
+/* 对话操作按钮 */
+.conversation-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conversation-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.app.dark .delete-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 侧边栏头部按钮样式 */
+
+/* 设置按钮样式 - 圆形白色边框 */
+.settings-btn {
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  color: #333;
+}
+
+.settings-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.1);
+}
+
+.app.dark .settings-btn {
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .settings-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 侧边栏折叠按钮 */
+.toggle-sidebar-btn {
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  color: #333;
+}
+
+.toggle-sidebar-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.1);
+}
+
+.app.dark .toggle-sidebar-btn {
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .toggle-sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 侧边栏折叠功能 */
+.sidebar {
+  width: 260px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: width;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+/* 折叠状态下隐藏大部分内容 - 优化过渡效果，消除闪烁 */
+.sidebar.collapsed .conversation-list,
+.sidebar.collapsed .settings-panel {
+  opacity: 0;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease, height 0.3s ease 0.1s;
+  transform: translateX(-10px);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.sidebar .conversation-list,
+.sidebar .settings-panel {
+  opacity: 1;
+  visibility: visible;
+  height: auto;
+  transition: opacity 0.2s ease 0.1s, visibility 0.2s ease 0.1s, height 0.3s ease;
+  transform: translateX(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 折叠状态下调整头部 */
+.sidebar.collapsed .sidebar-header {
+  padding: 16px 8px;
+  transition: padding 0.3s ease;
+}
+
+.sidebar .sidebar-header {
+  transition: padding 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-header h1 {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar .sidebar-header h1 {
+  opacity: 1;
+  visibility: visible;
+  transition: all 0.3s ease;
+}
+
+/* 底部按钮区域 */
+.bottom-actions {
+  display: flex;
+  gap: 15px;
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f8f8;
+  justify-content: center;
+  align-items: center;
+}
+
+.app.dark .bottom-actions {
+  background: #2d2d2d;
+  border-top-color: #444;
+}
+
+/* 主题切换按钮样式 */
+.theme-toggle-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.theme-toggle-btn:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.app.dark .theme-toggle-btn {
+  background: #3d3d3d;
+  border-color: #555;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+}
+
+.app.dark .theme-toggle-btn:hover {
+  background: #4d4d4d;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 设置按钮样式 - 重新设计 */
+.settings-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.settings-btn:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.app.dark .settings-btn {
+  background: #3d3d3d;
+  border-color: #555;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+}
+
+.app.dark .settings-btn:hover {
+  background: #4d4d4d;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 侧边栏折叠按钮 - 重新设计 */
+.toggle-sidebar-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.toggle-sidebar-btn:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.app.dark .toggle-sidebar-btn {
+  background: #3d3d3d;
+  border-color: #555;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+}
+
+.app.dark .toggle-sidebar-btn:hover {
+  background: #4d4d4d;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 折叠状态下调整按钮布局 */
+.sidebar.collapsed .header-actions {
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .new-conversation-btn {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: all 0.2s ease, width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.sidebar .new-conversation-btn {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  padding: 10px;
+  overflow: visible;
+  transition: all 0.2s ease 0.1s, width 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.1s, padding 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 折叠状态下隐藏非折叠按钮 */
+.sidebar.collapsed .bottom-actions {
+  opacity: 0;
+  visibility: hidden;
+  height: 0;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar .bottom-actions {
+  opacity: 1;
+  visibility: visible;
+  height: auto;
+  transition: all 0.3s ease;
+}
+
+/* 折叠状态下的按钮容器 - 固定在底部 */
+.collapsed-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 16px 8px;
+  align-items: center;
+  margin-top: auto;
+}
+
+.sidebar.collapsed .theme-toggle-btn,
+.sidebar.collapsed .settings-btn,
+.sidebar.collapsed .toggle-sidebar-btn {
+  width: 40px;
+  height: 40px;
+  margin-left: 0;
+}
+
+/* 设置面板 */
+.settings-panel {
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+  background: #fafafa;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.settings-panel h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.setting-group {
+  margin-bottom: 16px;
+}
+
+.setting-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.setting-group input,
+.setting-group textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #333;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  min-height: 80px;
+}
+
+.setting-group input:focus,
+.setting-group textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.setting-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.save-btn, .cancel-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  color: #ffffff;
+}
+
+.save-btn:hover {
+  background: #357abd;
+  border-color: #357abd;
+}
+
+.cancel-btn {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.setting-help {
+  margin-top: 20px;
+  padding: 12px;
+  background: #f0f7ff;
+  border-radius: 6px;
+  border: 1px solid #d0e7ff;
+}
+
+.setting-help h4 {
+  margin: 0 0 8px 0;
+  color: #2a7ae2;
+  font-size: 14px;
+}
+
+.setting-help ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.setting-help li {
+  margin-bottom: 4px;
+}
+
+.setting-help a {
+  color: #2a7ae2;
+  text-decoration: none;
+}
+
+.setting-help a:hover {
+  text-decoration: underline;
+}
+
+.app.dark .settings-panel {
+  background: #2d2d2d;
+  border-top-color: #444;
+}
+
+.app.dark .settings-panel h3 {
+  color: #e0e0e0;
+}
+
+.app.dark .setting-group label {
+  color: #aaa;
+}
+
+.app.dark .setting-group input,
+.app.dark .setting-group textarea {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .setting-group input:focus,
+.app.dark .setting-group textarea:focus {
+  border-color: #3a7bc8;
+  box-shadow: 0 0 0 2px rgba(58, 123, 200, 0.2);
+}
+
+.app.dark .cancel-btn {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .cancel-btn:hover {
+  background: #4d4d4d;
+}
+
+.app.dark .setting-help {
+  background: #1e3a5f;
+  border-color: #3a7bc8;
+}
+
+.app.dark .setting-help h4 {
+  color: #3a7bc8;
+}
+
+.app.dark .setting-help ul {
+  color: #aaa;
+}
+
+.app.dark .setting-help a {
+  color: #61dafb;
+}
+
+/* 调整新对话按钮宽度 */
+.new-conversation-btn {
+  width: 100%;
+  /* 保持原有的其他样式 */
+}
+
+.no-conversations {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.conversation-item {
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: background-color, border-color;
+}
+
+.conversation-item:hover {
+  background: #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.conversation-item.active {
+  background: #e8f0fe;
+  border: 1px solid #4a90e2;
+  transition: all 0.3s ease;
+}
+
+.conversation-title {
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.conversation-meta {
+  color: #999;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 模型提示样式 */
+.model-hint {
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(240, 240, 240, 0.8);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.hint-text {
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.model-list {
+  color: #4a90e2;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 深色主题下的模型提示样式 */
+.app.dark .model-hint {
+  background: rgba(85, 85, 85, 0.5);
+}
+
+.app.dark .hint-text {
+  color: #aaa;
+}
+
+.app.dark .model-list {
+  color: #3a7bc8;
+}

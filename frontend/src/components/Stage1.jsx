@@ -1,0 +1,36 @@
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import './Stage1.css';
+
+export default function Stage1({ responses }) {
+  const [activeTab, setActiveTab] = useState(0);
+
+  if (!responses || responses.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="stage stage1">
+      <h3 className="stage-title">阶段 1：个体回复</h3>
+
+      <div className="tabs">
+        {responses.map((resp, index) => (
+          <button
+            key={index}
+            className={`tab ${activeTab === index ? 'active' : ''}`}
+            onClick={() => setActiveTab(index)}
+          >
+            {resp.model.split('/')[1] || resp.model}
+          </button>
+        ))}
+      </div>
+
+      <div className="tab-content">
+        <div className="ranking-model">{responses[activeTab].model}</div>
+        <div className="ranking-content markdown-content">
+          <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
+}
