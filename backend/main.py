@@ -156,7 +156,7 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
 
     # If this is the first message, generate a title
     if is_first_message:
-        title = await generate_conversation_title(request.content)
+        title = await generate_conversation_title(request.content, request.api_key)
         storage.update_conversation_title(conversation_id, title)
     
     # Run the 3-stage council process with optional config, history context and files
@@ -260,7 +260,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             # Start title generation in parallel (don't await yet)
             title_task = None
             if is_first_message:
-                title_task = asyncio.create_task(generate_conversation_title(request.content))
+                title_task = asyncio.create_task(generate_conversation_title(request.content, request.api_key))
 
             # Stage 1: Collect responses with history context and files
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"

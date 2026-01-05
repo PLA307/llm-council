@@ -2,19 +2,35 @@
  * API client for the LLM Council backend.
  */
 
-// 使用环境变量或默认值，便于部署时配置
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001';
+// 处理 API_BASE URL，移除末尾斜杠
+const getApiBase = () => {
+  let base = import.meta.env.VITE_API_BASE;
+  if (!base) {
+    // 仅在开发环境或确实未设置时警告
+    console.warn('VITE_API_BASE environment variable is not set. Falling back to localhost.');
+    base = 'http://localhost:8001';
+  }
+  return base.replace(/\/$/, '');
+};
+
+const API_BASE = getApiBase();
+console.log('Configured API Base URL:', API_BASE);
 
 export const api = {
   /**
    * List all conversations.
    */
   async listConversations() {
-    const response = await fetch(`${API_BASE}/api/conversations`);
-    if (!response.ok) {
-      throw new Error('Failed to list conversations');
+    try {
+      const response = await fetch(`${API_BASE}/api/conversations`);
+      if (!response.ok) {
+        throw new Error(`Failed to list conversations: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Error listing conversations:', error);
+      throw error;
     }
-    return response.json();
   },
 
   /**

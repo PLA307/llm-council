@@ -1,8 +1,94 @@
 """OpenRouter API client for LLM Council."""
 
 import httpx
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
+
+async def query_model(
+    model: str,
+    messages: List[Dict[str, Any]],
+    api_key: str = None,
+    timeout: float = 60.0
+) -> Optional[Dict[str, Any]]:
+    """
+    Query a single model with the provided messages.
+    
+    Args:
+        model: The model to query
+        messages: List of messages in the conversation
+        api_key: OpenRouter API key
+        timeout: Request timeout in seconds
+        
+    Returns:
+        Dict with 'content' key containing the model's response, or None if failed
+    """
+    if api_key is None:
+        api_key = OPENROUTER_API_KEY
+    
+    if api_key is None:
+        raise ValueError("OpenRouter API key is required")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                OPENROUTER_API_URL,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://github.com/PLA307/llm-council",
+                    "X-Title": "LLM Council"
+                },
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "temperature": 0.7,
+                    "max_tokens": 1024,
+                    "timeout": timeout
+                },
+                timeout=timeout
+            )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                "content": data["choices"][0]["message"]["content"]
+            }
+        else:
+            print(f"Error querying {model}: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Exception querying {model}: {str(e)}")
+        return None
+
+async def query_models_parallel(
+    models: List[str],
+    messages: List[Dict[str, Any]],
+    api_key: str = None
+) -> Dict[str, Optional[Dict[str, Any]]]:
+    """
+    Query multiple models in parallel with the same messages.
+    
+    Args:
+        models: List of models to query
+        messages: List of messages in the conversation
+        api_key: OpenRouter API key
+        
+    Returns:
+        Dict mapping model names to their responses (or None if failed)
+    """
+    results = {}
+    
+    # Create all tasks
+    tasks = []
+    for model in models:
+        task = query_model(model, messages, api_key)
+        tasks.append((model, task))
+    
+    # Wait for all tasks to complete
+    for model, task in tasks:
+        results[model] = await task
+    
+    return results
 
 async def get_model_response(
     user_query: str,
@@ -51,29 +137,9 @@ async def get_model_response(
     messages.append({"role": "user", "content": user_query})
     
     # Make the API request
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            OPENROUTER_API_URL,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/PLA307/llm-council",
-                "X-Title": "LLM Council"
-            },
-            json={
-                "model": model,
-                "messages": messages,
-                "temperature": 0.7,
-                "max_tokens": 1024
-            }
-        )
+    response = await query_model(model, messages, api_key)
     
-    # Handle response
-    if response.status_code != 200:
-        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
-    
-    data = response.json()
-    return data["choices"][0]["message"]["content"]
+    return response["content"] if response else "Error: No response from model"
 
 async def generate_title(user_query: str, api_key: str = None) -> str:
     """
@@ -93,37 +159,20 @@ async def generate_title(user_query: str, api_key: str = None) -> str:
     if api_key is None:
         raise ValueError("OpenRouter API key is required")
     
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            OPENROUTER_API_URL,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/PLA307/llm-council",
-                "X-Title": "LLM Council"
-            },
-            json={
-                "model": "openai/gpt-5.1",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are a title generator. Generate a concise, descriptive title for a conversation based on the user's query. Keep it under 15 words."
-                    },
-                    {
-                        "role": "user",
-                        "content": user_query
-                    }
-                ],
-                "temperature": 0.5,
-                "max_tokens": 20
-            }
-        )
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a title generator. Generate a concise, descriptive title for a conversation based on the user's query. Keep it under 15 words."
+        },
+        {
+            "role": "user",
+            "content": user_query
+        }
+    ]
     
-    if response.status_code != 200:
-        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    response = await query_model("openai/gpt-5.1", messages, api_key)
     
-    data = response.json()
-    return data["choices"][0]["message"]["content"].strip()
+    return response["content"].strip() if response else "New Conversation"
 
 async def rank_responses(
     user_query: str,
@@ -153,7 +202,7 @@ async def rank_responses(
     # Format responses for ranking
     responses_text = "\n\n".join([f"{label}: {response}" for label, response in anonymized_responses.items()])
     
-    # 修复了字符串语法问题，使用更简洁的方式来构建消息
+    # Build messages with a clear system prompt
     messages = [
         {
             "role": "system",
@@ -165,37 +214,18 @@ async def rank_responses(
         }
     ]
     
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            OPENROUTER_API_URL,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/PLA307/llm-council",
-                "X-Title": "LLM Council"
-            },
-            json={
-                "model": model,
-                "messages": messages,
-                "temperature": 0.5,
-                "max_tokens": 500
-            }
-        )
+    response = await query_model(model, messages, api_key)
     
-    if response.status_code != 200:
-        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    if not response:
+        return []
     
-    data = response.json()
-    content = data["choices"][0]["message"]["content"]
-    
-    # Extract JSON from response
     import json
     try:
-        ranking = json.loads(content)
+        ranking = json.loads(response["content"])
         return ranking
     except json.JSONDecodeError:
         # If model didn't return valid JSON, try to parse it
-        raise Exception(f"Failed to parse ranking response: {content}")
+        raise Exception(f"Failed to parse ranking response: {response['content']}")
 
 async def synthesize_final_response(
     user_query: str,
@@ -235,34 +265,18 @@ async def synthesize_final_response(
             for rank, item in enumerate(result["ranking"]):
                 stage2_text += f"{rank+1}. {item['label']}: {item['reason']}\n"
     
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            OPENROUTER_API_URL,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/PLA307/llm-council",
-                "X-Title": "LLM Council"
-            },
-            json={
-                "model": model,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are the Chairman of the LLM Council. Your role is to synthesize all the responses from the council members and their rankings into a single, comprehensive final response. Please consider all perspectives and highlight the strongest points from each response."
-                    },
-                    {
-                        "role": "user",
-                        "content": "User Query: " + user_query + "\n\nCouncil Responses:\n" + stage1_text + "\n\nCouncil Rankings:\n" + stage2_text + "\n\nPlease synthesize a comprehensive final response that incorporates the best insights from all council members, considering their rankings."
-                    }
-                ],
-                "temperature": 0.7,
-                "max_tokens": 1500
-            }
-        )
+    # Build messages for the chairman model
+    messages = [
+        {
+            "role": "system",
+            "content": "You are the Chairman of the LLM Council. Your role is to synthesize all the responses from the council members and their rankings into a single, comprehensive final response. Please consider all perspectives and highlight the strongest points from each response."
+        },
+        {
+            "role": "user",
+            "content": "User Query: " + user_query + "\n\nCouncil Responses:\n" + stage1_text + "\n\nCouncil Rankings:\n" + stage2_text + "\n\nPlease synthesize a comprehensive final response that incorporates the best insights from all council members, considering their rankings."
+        }
+    ]
     
-    if response.status_code != 200:
-        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    response = await query_model(model, messages, api_key)
     
-    data = response.json()
-    return data["choices"][0]["message"]["content"]
+    return response["content"] if response else "Error: No final response generated"
