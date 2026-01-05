@@ -12,6 +12,7 @@ export default function ChatInterface({
   isLoading,
   setIsLoading,
   onUpdateConversations,
+  theme,
 }) {
   const [input, setInput] = useState('');
   // 使用数组存储多条引用记录，每条记录包含阶段、答案序号和内容
@@ -113,10 +114,8 @@ export default function ChatInterface({
     }
   };
 
-  // 清除引用
-  const clearQuote = () => {
-    setQuotedContent(null);
-  };
+  // 清除引用功能已合并到clearQuoteItem和clearAllQuotes函数中
+  // 此函数已废弃，保留以避免错误
 
   // 文件拖放事件处理
   const handleDragEnter = (e) => {
