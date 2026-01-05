@@ -59,6 +59,10 @@ function App() {
     }
   };
 
+  const onConversationSelect = (id) => {
+    setCurrentConversationId(id);
+  };
+
   const handleSendMessage = async (content, quotedItems = [], fileData = []) => {
     if (!currentConversationId) return;
 
@@ -211,7 +215,7 @@ function App() {
       <Sidebar
         conversations={conversations}
         currentConversationId={currentConversationId}
-        onSelectConversation={handleSelectConversation}
+        onSelectConversation={onConversationSelect}
         onNewConversation={handleNewConversation}
         onUpdateConversations={handleUpdateConversations}
         theme={theme}
