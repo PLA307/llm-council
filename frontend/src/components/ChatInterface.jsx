@@ -31,210 +31,231 @@ export default function ChatInterface({
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // 滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // 当对话或消息更新时，滚动到底部
   useEffect(() => {
     scrollToBottom();
-  }, [conversation?.messages]);
+  }, [conversation]);
 
-  // 当输入框内容变化时，自动调整高度
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [input]);
-
-  // 处理输入变化
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-  };
-
-  // 处理发送消息
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    // 转换文件数据格式，只保留需要的信息
-    const fileData = uploadedFiles.map(file => ({
-      name: file.name,
-      content: file.content,
-      type: file.type
-    }));
-
-    // 发送消息
-    await onSendMessage(input.trim(), quotedItems, fileData);
-
-    // 重置状态
-    setInput('');
-    setQuotedItems([]);
-    setIsAllQuotesCleared(true);
-    setUploadedFiles([]);
-    setUploadStatus('idle');
-    setErrorMessage('');
-    
-    // 重置清除引用标记
-    setTimeout(() => {
-      setIsAllQuotesCleared(false);
-    }, 100);
-  };
-
-  // 处理引用内容
-  const handleQuote = (stage, answerIndex, content) => {
-    console.log('DEBUG ChatInterface: handleQuote called with:', { stage, answerIndex, content });
-    
-    // 检查是否已经引用了相同的内容
-    const isAlreadyQuoted = quotedItems.some(item => 
-      item.stage === stage && item.answerIndex === answerIndex
-    );
-    
-    if (!isAlreadyQuoted) {
-      setQuotedItems(prev => [...prev, { stage, answerIndex, content }]);
-    }
-  };
-
-  // 处理移除引用
-  const handleRemoveQuote = (index) => {
-    setQuotedItems(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // 处理清除所有引用
-  const handleClearAllQuotes = () => {
-    setQuotedItems([]);
-    setIsAllQuotesCleared(true);
-    
-    // 重置清除引用标记
-    setTimeout(() => {
-      setIsAllQuotesCleared(false);
-    }, 100);
-  };
-
-  // 重新生成阶段3
-  const handleRegenerateStage3 = async (msg) => {
-    if (!conversation || !msg) return;
-    
-    // 查找消息索引
-    const messageIndex = conversation.messages.indexOf(msg);
-    if (messageIndex === -1) return;
-    
-    setIsRegenerating(true);
-    try {
-      // 调用API重新生成阶段3
-      const result = await api.regenerateStage3(conversation.id, messageIndex);
-      
-      // 更新对话列表，获取最新内容
-      if (onUpdateConversations) {
-        await onUpdateConversations();
+  // 处理引用内容的回调函数
+  const handleQuote = (content, stage = 3, answerIndex = 0, isQuoted = false) => {
+    // 确保content是字符串，防止无效值
+    if (typeof content === 'string') {
+      // 检查是否已经引用了相同内容
+      const existingIndex = quotedItems.findIndex(item => item.content === content);
+      if (isQuoted) {
+        // 如果要引用且不存在，添加新引用，最多5条
+        if (existingIndex === -1) {
+          const newItem = {
+            id: Date.now(), // 使用时间戳作为唯一标识
+            stage,
+            answerIndex: answerIndex + 1, // 答案序号从1开始
+            content
+          };
+          // 限制最多5条引用记录
+          const updatedItems = [...quotedItems, newItem].slice(-5);
+          setQuotedItems(updatedItems);
+        }
+      } else {
+        // 如果要取消引用且存在，移除引用
+        if (existingIndex >= 0) {
+          const updatedItems = quotedItems.filter((_, index) => index !== existingIndex);
+          setQuotedItems(updatedItems);
+        }
       }
-      
-      console.log('重新生成阶段3成功:', result);
-    } catch (error) {
-      console.error('重新生成阶段3失败:', error);
-      alert('重新生成阶段3失败，请重试');
-    } finally {
-      setIsRegenerating(false);
     }
   };
 
-  // 处理文件上传（拖放）
-  const handleDragOver = (e) => {
+  // 清除单条引用
+  const clearQuoteItem = (id) => {
+    const updatedItems = quotedItems.filter(item => item.id !== id);
+    setQuotedItems(updatedItems);
+  };
+
+  // 清除所有引用
+  const clearAllQuotes = () => {
+    setQuotedItems([]);
+    // 设置清除标记，通知子组件重置引用状态
+    setIsAllQuotesCleared(true);
+    // 在下次渲染后重置清除标记
+    setTimeout(() => {
+      setIsAllQuotesCleared(false);
+    }, 0);
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+    // 如果有输入内容、引用内容或已上传文件，且不在加载中，允许发送
+    if ((input.trim() || quotedItems.length > 0 || uploadedFiles.length > 0) && !isLoading) {
+      console.log('DEBUG: 准备发送消息，已上传文件数量:', uploadedFiles.length);
+      // 准备要发送的文件数据
+      const fileData = uploadedFiles.map(fileItem => ({
+        name: fileItem.file.name,
+        content: fileItem.content
+      }));
+      
+      console.log('DEBUG: 发送的文件数据:', fileData);
+      // 发送的消息包含用户输入、引用内容和文件数据
+      onSendMessage(input.trim(), quotedItems, fileData);
+      // 发送后清除所有引用和已上传文件
+      setQuotedItems([]);
+      setUploadedFiles([]);
+      setInput('');
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    // Submit on Enter (without Shift)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  // 清除引用功能已合并到clearQuoteItem和clearAllQuotes函数中
+  // 此函数已废弃，保留以避免错误
+
+  // 文件拖放事件处理
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => {
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     
+    // 获取拖放的文件
     const files = Array.from(e.dataTransfer.files);
-    processFiles(files);
+    if (files.length > 0) {
+      handleFileSelection(files);
+    }
   };
 
-  // 处理文件上传（点击选择）
+  // 文件选择处理
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    processFiles(files);
-  };
-
-  // 处理文件上传（点击上传按钮）
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+    if (files.length > 0) {
+      handleFileSelection(files);
     }
   };
 
-  // 处理文件
-  const processFiles = async (files) => {
-    // 只处理文本文件，限制大小为1MB
-    const textFiles = files.filter(file => 
-      file.type.startsWith('text/') || 
-      ['.md', '.txt', '.json', '.js', '.py', '.html', '.css'].includes(getFileExtension(file.name))
-    );
-    
-    if (textFiles.length === 0) {
-      setErrorMessage('请选择文本文件（.txt, .md, .json, .js, .py, .html, .css等）');
-      setUploadStatus('error');
-      return;
-    }
-    
+  // 触发文件选择对话框
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 文件选择处理（支持多文件）
+  const handleFileSelection = (files) => {
+    // 重置状态
+    setErrorMessage('');
     setUploadStatus('loading');
     setUploadProgress(0);
     
-    // 读取文件内容
-    const processedFiles = [];
-    for (let i = 0; i < textFiles.length; i++) {
-      const file = textFiles[i];
-      
-      // 检查文件大小
-      if (file.size > 1024 * 1024) { // 1MB
-        setErrorMessage(`文件 ${file.name} 超过1MB限制，已跳过`);
-        setUploadStatus('error');
-        continue;
+    // 模拟上传进度
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return prev + 10;
+      });
+    }, 100);
+    
+    // 验证并处理每个文件
+    const validFiles = [];
+    let errorMsg = '';
+    
+    for (const file of files) {
+      // 验证文件类型
+      if (!file.name.endsWith('.md')) {
+        errorMsg = `仅允许上传扩展名为.md的Markdown文件，"${file.name}" 类型无效`;
+        break;
       }
       
-      // 读取文件内容
-      const content = await readFileAsText(file);
-      processedFiles.push({
-        name: file.name,
-        content: content,
-        type: file.type,
-        size: file.size
-      });
+      // 验证文件大小（10MB）
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        errorMsg = `文件大小不能超过10MB，"${file.name}" 大小：${(file.size / (1024 * 1024)).toFixed(2)}MB`;
+        break;
+      }
       
-      // 更新上传进度
-      setUploadProgress(Math.round(((i + 1) / textFiles.length) * 100));
+      // 检查文件名是否已存在
+      if (!validFiles.some(f => f.name === file.name)) {
+        validFiles.push(file);
+      }
     }
     
-    // 添加到已上传文件列表
-    setUploadedFiles(prev => [...prev, ...processedFiles]);
-    setUploadStatus('success');
+    if (errorMsg) {
+      clearInterval(progressInterval);
+      setUploadStatus('error');
+      setErrorMessage(errorMsg);
+      return;
+    }
     
-    // 3秒后清除上传状态
-    setTimeout(() => {
-      setUploadStatus('idle');
-      setUploadProgress(0);
-    }, 3000);
+    // 读取文件内容并保存
+    const loadFiles = async () => {
+      const loadedFiles = [];
+      
+      for (const file of validFiles) {
+        const content = await readFileContent(file);
+        console.log('DEBUG: 成功读取文件:', file.name, '内容长度:', content.length);
+        loadedFiles.push({ file, content });
+      }
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploadStatus('success');
+      
+      // 更新已上传文件列表
+      setUploadedFiles(prev => {
+        const newFiles = [...prev, ...loadedFiles];
+        console.log('DEBUG: 更新后的已上传文件列表:', newFiles.map(f => f.file.name));
+        return newFiles;
+      });
+      
+      // 显示上传成功提示
+      setTimeout(() => {
+        setUploadStatus('idle');
+      }, 2000);
+    };
+    
+    loadFiles();
   };
 
-  // 辅助函数：获取文件扩展名
-  const getFileExtension = (filename) => {
-    return filename.slice(((filename.lastIndexOf('.') - 1) >>> 0) + 2);
-  };
-
-  // 辅助函数：读取文件内容
-  const readFileAsText = (file) => {
+  // 读取文件内容
+  const readFileContent = (file) => {
     return new Promise((resolve, reject) => {
+      console.log('DEBUG: 开始读取文件:', file.name);
       const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.onerror = reject;
+      
+      reader.onload = (e) => {
+        console.log('DEBUG: 文件读取成功:', file.name, '内容长度:', e.target.result.length);
+        resolve(e.target.result);
+      };
+      
+      reader.onerror = (e) => {
+        console.error('DEBUG: 文件读取失败:', file.name, e);
+        reject(new Error('文件读取失败'));
+      };
+      
       reader.readAsText(file);
     });
   };
@@ -252,274 +273,439 @@ export default function ChatInterface({
     setErrorMessage('');
   };
 
+  // 重新生成阶段3答案
+  const handleRegenerateStage3 = async (msg) => {
+    // 显示加载状态
+    setIsLoading(true);
+    
+    try {
+      // 调用API重新生成阶段3
+      // 需要获取对话ID和消息索引
+      const conversationId = conversation.id;
+      const messageIndex = conversation.messages.findIndex(m => m === msg);
+      
+      if (messageIndex === -1) {
+        throw new Error('消息未找到');
+      }
+      
+      // 调用API重新生成阶段3
+      const result = await api.regenerateStage3(conversationId, messageIndex);
+      
+      // 更新对话状态
+      // 重新加载对话以获取更新后的内容
+      await onUpdateConversations();
+      
+      console.log('重新生成阶段3成功:', result);
+      
+    } catch (error) {
+      console.error('重新生成阶段3失败:', error);
+      alert('重新生成阶段3失败，请重试');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!conversation) {
+    return (
+      <div className="chat-interface">
+        <div className="empty-state">
+          <h2>欢迎使用 LLM 理事会</h2>
+          <p>创建新对话开始使用</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`chat-interface ${theme}`}>
-      {conversation ? (
-        <>
-          {/* 对话历史 */}
-          <div className="chat-history">
-            {/* 对话标题 */}
-            <div className="chat-header">
-              <h2>{conversation.title || '未命名对话'}</h2>
-              <div className="chat-actions">
-                {/* 这里可以添加更多操作按钮 */}
+    <div className="chat-interface">
+      {/* 悬浮汉堡菜单导航 */}
+      <div className="floating-nav">
+        <div className="nav-icon">
+          <div className="nav-lines"></div>
+          <div className="nav-tooltip">
+            <div className="nav-items">
+              {/* 阶段 1 主菜单项 */}
+              <div className="nav-item main-nav-item">
+                <span className="nav-item-title">阶段 1</span>
+                <div className="nav-item-tooltip">
+                  <div className="tooltip-content">
+                    <h4>阶段 1: 个体回复</h4>
+                    <p>收集各个模型的独立回复</p>
+                  </div>
+                </div>
+                {/* 阶段 1 子菜单 */}
+                <div className="nav-subitems">
+                  {conversation.messages
+                    .filter(msg => msg.role === 'assistant' && msg.stage1)
+                    .map((msg, msgIndex) => (
+                      <div 
+                        key={`stage1-${msgIndex}`}
+                        className="nav-subitem"
+                        onClick={() => {
+                          // 查找对应消息的stage1元素
+                          const assistantMessages = document.querySelectorAll('.assistant-message');
+                          assistantMessages.forEach((elem, index) => {
+                            if (index === msgIndex) {
+                              const stage1Element = elem.querySelector('.stage1');
+                              if (stage1Element) {
+                                stage1Element.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              }
+                            }
+                          });
+                        }}
+                      >
+                        <span className="nav-subitem-title">回复 {msgIndex + 1}</span>
+                        <div className="nav-subitem-tooltip">
+                          <div className="tooltip-content">
+                            <h4>阶段 1 回复 {msgIndex + 1}</h4>
+                            <p>查看第{msgIndex + 1}条个体回复</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              
+              {/* 阶段 2 主菜单项 */}
+              <div className="nav-item main-nav-item">
+                <span className="nav-item-title">阶段 2</span>
+                <div className="nav-item-tooltip">
+                  <div className="tooltip-content">
+                    <h4>阶段 2: 同伴排名</h4>
+                    <p>模型之间互相评估和排名</p>
+                  </div>
+                </div>
+                {/* 阶段 2 子菜单 */}
+                <div className="nav-subitems">
+                  {conversation.messages
+                    .filter(msg => msg.role === 'assistant' && msg.stage2)
+                    .map((msg, msgIndex) => (
+                      <div 
+                        key={`stage2-${msgIndex}`}
+                        className="nav-subitem"
+                        onClick={() => {
+                          // 查找对应消息的stage2元素
+                          const assistantMessages = document.querySelectorAll('.assistant-message');
+                          assistantMessages.forEach((elem, index) => {
+                            if (index === msgIndex) {
+                              const stage2Element = elem.querySelector('.stage2');
+                              if (stage2Element) {
+                                stage2Element.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              }
+                            }
+                          });
+                        }}
+                      >
+                        <span className="nav-subitem-title">排名 {msgIndex + 1}</span>
+                        <div className="nav-subitem-tooltip">
+                          <div className="tooltip-content">
+                            <h4>阶段 2 排名 {msgIndex + 1}</h4>
+                            <p>查看第{msgIndex + 1}条同伴排名</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              
+              {/* 阶段 3 主菜单项 */}
+              <div className="nav-item main-nav-item">
+                <span className="nav-item-title">阶段 3</span>
+                <div className="nav-item-tooltip">
+                  <div className="tooltip-content">
+                    <h4>阶段 3: 最终答案</h4>
+                    <p>综合各模型回复，生成最终答案</p>
+                  </div>
+                </div>
+                {/* 阶段 3 子菜单 */}
+                <div className="nav-subitems">
+                  {conversation.messages
+                    .filter(msg => msg.role === 'assistant' && msg.stage3)
+                    .map((msg, msgIndex) => (
+                      <div 
+                        key={`stage3-${msgIndex}`}
+                        className="nav-subitem"
+                        onClick={() => {
+                          // 查找对应消息的stage3元素
+                          const assistantMessages = document.querySelectorAll('.assistant-message');
+                          assistantMessages.forEach((elem, index) => {
+                            if (index === msgIndex) {
+                              const stage3Element = elem.querySelector('.stage3');
+                              if (stage3Element) {
+                                stage3Element.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
+                                  inline: 'nearest'
+                                });
+                              }
+                            }
+                          });
+                        }}
+                      >
+                        <span className="nav-subitem-title">答案 {msgIndex + 1}</span>
+                        <div className="nav-subitem-tooltip">
+                          <div className="tooltip-content">
+                            <h4>阶段 3 答案 {msgIndex + 1}</h4>
+                            <p>查看第{msgIndex + 1}条最终答案</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
-            
-            {/* 消息列表 */}
-            <div className="messages">
-              {conversation.messages.map((message, index) => (
-                <div key={index} className={`message ${message.role}`}>
-                  {/* 用户消息 */}
-                  {message.role === 'user' && (
-                    <div className="message-content user-message">
-                      {/* 引用内容 */}
-                      {message.quoted_items && message.quoted_items.length > 0 && (
-                        <div className="quoted-content">
-                          {message.quoted_items.map((item, i) => (
-                            <div key={i} className="quoted-item">
-                              <div className="quoted-header">
-                                引用阶段{item.stage}答案{item.answerIndex}：
-                              </div>
-                              <div className="quoted-text">
-                                {item.content}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* 消息文本 */}
-                      <div className="message-text">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                      </div>
-                      
-                      {/* 上传的文件 */}
-                      {message.files && message.files.length > 0 && (
-                        <div className="uploaded-files">
-                          <h4>上传的文件：</h4>
-                          <div className="file-list">
-                            {message.files.map((file, i) => (
-                              <div key={i} className="file-item">
-                                📄 {file.name}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+          </div>
+        </div>
+      </div>
+      
+      <div className="messages-container">
+        {conversation.messages.length === 0 ? (
+          <div className="empty-state">
+            <h2>开始对话</h2>
+            <p>提问以咨询 LLM 理事会</p>
+          </div>
+        ) : (
+          conversation.messages.map((msg, index) => (
+            <div key={index} className="message-group">
+              {msg.role === 'user' ? (
+                <div className="user-message">
+                  <div className="message-label">你</div>
+                  <div className="message-content">
+                    <div className="markdown-content">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="assistant-message">
+                  <div className="message-label">LLM 理事会</div>
+
+                  {/* Stage 1 */}
+                  {msg.loading?.stage1 && (
+                    <div className="stage-loading">
+                      <div className="spinner"></div>
+                      <span>运行阶段 1：收集个体回复...</span>
                     </div>
                   )}
-                  
-                  {/* 助手消息 */}
-                  {message.role === 'assistant' && (
-                    <div className="message-content assistant-message">
-                      {/* 阶段1：收集回答 */}
-                      {message.stage1 && (
-                        <Stage1 
-                          data={message.stage1} 
-                          onQuote={handleQuote}
-                          isAllQuotesCleared={isAllQuotesCleared}
-                        />
-                      )}
-                      
-                      {/* 阶段2：互相评价 */}
-                      {message.stage2 && (
-                        <Stage2 
-                          data={message.stage2} 
-                          metadata={message.metadata}
-                          onQuote={handleQuote}
-                          isAllQuotesCleared={isAllQuotesCleared}
-                        />
-                      )}
-                      
-                      {/* 阶段3：最终答案 */}
-                      {message.stage3 && (
-                        <Stage3 
-                          data={message.stage3} 
-                          onQuote={handleQuote}
-                          isAllQuotesCleared={isAllQuotesCleared}
-                          onRegenerate={() => handleRegenerateStage3(message)}
-                          isRegenerating={isRegenerating}
-                        />
-                      )}
-                      
-                      {/* 加载状态 */}
-                      {(message.loading && (message.loading.stage1 || message.loading.stage2 || message.loading.stage3)) && (
-                        <div className="loading-indicator">
-                          <div className="loading-spinner"></div>
-                          <div className="loading-text">
-                            {message.loading.stage1 && '正在收集回答...'}
-                            {message.loading.stage2 && '正在互相评价...'}
-                            {message.loading.stage3 && '正在生成最终答案...'}
-                          </div>
-                        </div>
-                      )}
+                  {msg.stage1 && <Stage1 responses={msg.stage1} />}
+
+                  {/* Stage 2 */}
+                  {msg.loading?.stage2 && (
+                    <div className="stage-loading">
+                      <div className="spinner"></div>
+                      <span>运行阶段 2：同伴排名...</span>
                     </div>
                   )}
+                  {msg.stage2 && (
+                    <Stage2
+                      rankings={msg.stage2}
+                      labelToModel={msg.metadata?.label_to_model}
+                      aggregateRankings={msg.metadata?.aggregate_rankings}
+                    />
+                  )}
+
+                  {/* 阶段 3 */}
+                  {msg.loading?.stage3 && (
+                    <div className="stage-loading">
+                      <div className="spinner"></div>
+                      <span>运行阶段 3：最终综合...</span>
+                    </div>
+                  )}
+                  {msg.stage3 && <Stage3 
+                    finalResponse={msg.stage3} 
+                    onQuote={handleQuote} 
+                    onRegenerateStage3={() => handleRegenerateStage3(msg)} 
+                    isAllQuotesCleared={isAllQuotesCleared} 
+                  />}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+
+        {isLoading && (
+          <div className="loading-indicator">
+            <div className="spinner"></div>
+            <span>正在咨询理事会...</span>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form className="input-form" onSubmit={handleSubmit}>
+        {/* 引用状态指示 */}
+        {quotedItems.length > 0 && (
+          <div className="quoted-indicator">
+            <div className="quoted-header">
+              <div className="quoted-icon">💬</div>
+              <div className="quoted-title">引用记录</div>
+              <button 
+                className="clear-all-quotes-btn"
+                onClick={clearAllQuotes}
+                title="清除所有引用"
+              >
+                清除所有
+              </button>
+            </div>
+            <div className="quoted-list">
+              {quotedItems.map((item) => (
+                <div key={item.id} className="quoted-item">
+                  <div className="quoted-marker">引用阶段{item.stage}答案{item.answerIndex}</div>
+                  <div className="quoted-preview">
+                    {item.content.length > 5 ? `${item.content.substring(0, 5)}...` : item.content}
+                  </div>
+                  <button 
+                    className="clear-quote-item-btn"
+                    onClick={() => clearQuoteItem(item.id)}
+                    title="清除该引用"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
-              
-              {/* 滚动到底部的引用 */}
-              <div ref={messagesEndRef} />
             </div>
           </div>
-          
-          {/* 输入区域 */}
-          <div 
-            className={`message-input-area ${isDragging ? 'dragging' : ''}`}
+        )}
+        
+        {/* 文件上传区域 */}
+        {/* 隐藏的文件输入框，支持多文件选择 */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileSelect}
+          accept=".md"
+          multiple
+        />
+        
+        {/* 已上传文件列表 - 简化显示，移除插入按钮 */}
+        {uploadedFiles.length > 0 && (
+          <div className="uploaded-files-list">
+            <div className="uploaded-files-header">
+              <span className="files-title">已上传文件 ({uploadedFiles.length})</span>
+              <button 
+                type="button"
+                className="clear-all-btn"
+                onClick={handleCancelAll}
+                title="清除所有文件"
+              >
+                清除所有
+              </button>
+            </div>
+
+            <div className="files-container">
+              {uploadedFiles.map((fileItem, index) => (
+                <div key={index} className="file-item">
+                  <div className="file-info">
+                    <span className="file-icon">📄</span>
+                    <span className="file-number">文件{index + 1}:</span>
+                    <span className="file-name">{fileItem.file.name}</span>
+                    <span className="file-size">{(fileItem.file.size / 1024).toFixed(2)} KB</span>
+                  </div>
+                  <div className="file-actions">
+                    <button 
+                      type="button"
+                      className="remove-file-btn"
+                      onClick={() => handleRemoveFile(index)}
+                      title="移除文件"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* 上传状态反馈 */}
+        {uploadStatus === 'loading' && (
+          <div className="upload-status loading">
+            <div className="spinner"></div>
+            <div className="status-content">
+              <div className="status-text">正在上传...</div>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <div className="progress-text">{uploadProgress}%</div>
+            </div>
+          </div>
+        )}
+        
+        {uploadStatus === 'success' && (
+          <div className="upload-status success">
+            <div className="success-icon">✅</div>
+            <div className="success-message">文件上传成功！</div>
+          </div>
+        )}
+        
+        {uploadStatus === 'error' && errorMessage && (
+          <div className="upload-status error">
+            <div className="error-icon">❌</div>
+            <div className="error-message">{errorMessage}</div>
+            <button 
+              type="button"
+              className="retry-btn"
+              onClick={handleCancelAll}
+            >
+              重试
+            </button>
+          </div>
+        )}
+        
+        <div className="input-area">
+          <textarea
+            ref={textareaRef}
+            className={`message-input ${quotedItems.length > 0 ? 'has-quoted' : ''}`}
+            placeholder="提出你的问题... (Shift+Enter 换行，Enter 发送)"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            rows={3}
+            onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-          >
-            {/* 已选择的引用 */}
-            {quotedItems.length > 0 && (
-              <div className="selected-quotes">
-                <div className="quotes-header">
-                  <span>已选择的引用 ({quotedItems.length})</span>
-                  <button 
-                    className="clear-quotes-btn"
-                    onClick={handleClearAllQuotes}
-                  >
-                    清除所有
-                  </button>
-                </div>
-                <div className="quotes-list">
-                  {quotedItems.map((item, index) => (
-                    <div key={index} className="quote-item">
-                      <div className="quote-content">
-                        阶段{item.stage}答案{item.answerIndex}：{item.content.slice(0, 50)}...
-                      </div>
-                      <button 
-                        className="remove-quote-btn"
-                        onClick={() => handleRemoveQuote(index)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          />
+          
+          <div className="send-upload-container">
+            {/* 拖放区域 - 圆形样式 */}
+            <div 
+              className={`upload-area circular ${isDragging ? 'dragging' : ''}`}
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={triggerFileSelect}
+              title="拖放Markdown文件到此处或点击选择文件"
+            >
+              <div className="upload-icon">📁</div>
+            </div>
             
-            {/* 文件上传状态 */}
-            {uploadStatus !== 'idle' && (
-              <div className={`upload-status ${uploadStatus}`}>
-                {uploadStatus === 'loading' && (
-                  <div className="upload-progress">
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
-                    <div className="progress-text">
-                      上传中... {uploadProgress}%
-                    </div>
-                  </div>
-                )}
-                {uploadStatus === 'success' && (
-                  <div className="upload-success">
-                    文件上传成功！
-                  </div>
-                )}
-                {uploadStatus === 'error' && (
-                  <div className="upload-error">
-                    {errorMessage || '文件上传失败'}
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* 已上传的文件 */}
-            {uploadedFiles.length > 0 && (
-              <div className="uploaded-files-preview">
-                {uploadedFiles.map((file, index) => (
-                  <div key={index} className="uploaded-file-item">
-                    <div className="file-info">
-                      <span className="file-name">{file.name}</span>
-                      <span className="file-size">
-                        {(file.size / 1024).toFixed(1)}KB
-                      </span>
-                    </div>
-                    <button 
-                      className="remove-file-btn"
-                      onClick={() => handleRemoveFile(index)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button 
-                  className="cancel-all-btn"
-                  onClick={handleCancelAll}
-                >
-                  取消所有
-                </button>
-              </div>
-            )}
-            
-            {/* 输入表单 */}
-            <form className="message-form" onSubmit={handleSubmit}>
-              <div className="input-container">
-                {/* 隐藏的文件输入 */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  multiple
-                  onChange={handleFileSelect}
-                  accept=".txt,.md,.json,.js,.py,.html,.css"
-                  style={{ display: 'none' }}
-                />
-                
-                {/* 上传按钮 */}
-                <button 
-                  type="button"
-                  className="upload-btn"
-                  onClick={handleUploadClick}
-                  title="上传文件"
-                >
-                  📎
-                </button>
-                
-                {/* 文本输入框 */}
-                <textarea
-                  ref={textareaRef}
-                  className="message-input"
-                  placeholder="输入你的问题..."
-                  value={input}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                  rows={1}
-                  disabled={isLoading}
-                ></textarea>
-                
-                {/* 发送按钮 */}
-                <button 
-                  type="submit" 
-                  className="send-btn"
-                  disabled={!input.trim() || isLoading}
-                >
-                  {isLoading ? (
-                    <div className="sending-spinner"></div>
-                  ) : (
-                    '发送'
-                  )}
-                </button>
-              </div>
-            </form>
+            <button
+              type="submit"
+              className="send-button circular"
+              disabled={!(input.trim() || quotedItems.length > 0 || uploadedFiles.length > 0) || isLoading}
+              title="发送消息"
+            >
+              ➤
+            </button>
           </div>
-        </>
-      ) : (
-        <div className="empty-state">
-          <h2>欢迎使用 LLM Council</h2>
-          <p>从侧边栏创建一个新对话开始吧</p>
         </div>
-      )}
+      </form>
     </div>
   );
 }
