@@ -1,145 +1,135 @@
-/* index.css */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* 更全面的重置样式 */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+body {
+  background: #f5f5f5;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #888;
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 确保App组件占满整个屏幕 */
+.app {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* 确保侧边栏和聊天界面正确布局 */
+.sidebar {
+  flex: 0 0 260px;
+  overflow: hidden;
+}
+
+.chat-interface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Global markdown styling */
+.markdown-content {
+  padding: 12px;
+}
+
+.markdown-content p {
+  margin: 0 0 12px 0;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 16px 0 8px 0;
+}
+
+.markdown-content h1:first-child,
+.markdown-content h2:first-child,
+.markdown-content h3:first-child,
+.markdown-content h4:first-child,
+.markdown-content h5:first-child,
+.markdown-content h6:first-child {
+  margin-top: 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0 0 12px 0;
+  padding-left: 24px;
+}
+
+.markdown-content li {
+  margin: 4px 0;
+}
+
+.markdown-content pre {
+  background: #f5f5f5;
+  padding: 12px;
   border-radius: 4px;
+  overflow-x: auto;
+  margin: 0 0 12px 0;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
+.markdown-content code {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
 }
 
-/* Dark theme scrollbar */
-body.dark ::-webkit-scrollbar-track {
-  background: #2d2d2d;
+.markdown-content pre code {
+  background: none;
+  padding: 0;
 }
 
-body.dark ::-webkit-scrollbar-thumb {
-  background: #555;
-}
-
-body.dark ::-webkit-scrollbar-thumb:hover {
-  background: #777;
-}
-
-/* 全局通用样式 */
-button {
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-input, textarea {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  background-color: var(--card-background);
-  color: var(--text-color);
-  transition: border-color 0.2s ease;
-}
-
-input:focus, textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.25);
-}
-
-/* 卡片样式 */
-.card {
-  background-color: var(--card-background);
-  border-radius: 8px;
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  margin-bottom: 16px;
-  transition: box-shadow 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-/* 按钮样式 */
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.btn-secondary {
-  background-color: var(--secondary-color);
-  color: white;
-}
-
-.btn-success {
-  background-color: var(--success-color);
-  color: white;
-}
-
-.btn-warning {
-  background-color: var(--warning-color);
-  color: #212529;
-}
-
-.btn-danger {
-  background-color: var(--error-color);
-  color: white;
-}
-
-.btn-info {
-  background-color: var(--info-color);
-  color: white;
-}
-
-/* 主题切换 */
-body.light {
-  background-color: var(--background-color);
-  color: var(--text-color);
-}
-
-body.dark {
-  background-color: var(--background-color);
-  color: var(--text-color);
+.markdown-content blockquote {
+  margin: 0 0 12px 0;
+  padding-left: 16px;
+  border-left: 4px solid #ddd;
+  color: #666;
 }
