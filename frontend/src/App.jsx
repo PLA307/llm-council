@@ -59,7 +59,7 @@ function App() {
     }
   };
 
-  const handleSelectConversation = (id) => {
+  const onConversationSelect = (id) => {
     setCurrentConversationId(id);
   };
 
@@ -215,7 +215,7 @@ function App() {
       <Sidebar
         conversations={conversations}
         currentConversationId={currentConversationId}
-        onSelectConversation={handleSelectConversation}
+        onSelectConversation={onConversationSelect}
         onNewConversation={handleNewConversation}
         onUpdateConversations={handleUpdateConversations}
         theme={theme}
