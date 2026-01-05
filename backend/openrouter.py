@@ -153,6 +153,18 @@ async def rank_responses(
     # Format responses for ranking
     responses_text = "\n\n".join([f"{label}: {response}" for label, response in anonymized_responses.items()])
     
+    # 修复了这里的字符串语法问题
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful AI assistant tasked with ranking responses to a user query. Please analyze all responses and rank them from best to worst based on accuracy, insight, and relevance to the query. Return your ranking in JSON format with a list of objects containing 'label' and 'reason' fields."
+        },
+        {
+            "role": "user",
+            "content": f"User Query: {user_query}\n\nResponses:\n{responses_text}\n\nPlease rank these responses from best to worst. Return only JSON in this format: [{\"label\": \"A\", \"reason\": \"Explanation\"}, {\"label\": \"B\", \"reason\": \"Explanation\"}]."
+        }
+    ]
+    
     async with httpx.AsyncClient() as client:
         response = await client.post(
             OPENROUTER_API_URL,
@@ -164,16 +176,7 @@ async def rank_responses(
             },
             json={
                 "model": model,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are a helpful AI assistant tasked with ranking responses to a user query. Please analyze all responses and rank them from best to worst based on accuracy, insight, and relevance to the query. Return your ranking in JSON format with a list of objects containing 'label' and 'reason' fields."
-                    },
-                    {
-                        "role": "user",
-                        "content": f"User Query: {user_query}\n\nResponses:\n{responses_text}\n\nPlease rank these responses from best to worst. Return only JSON in this format: [{\"label\": \"A\", \"reason\": \"Explanation\"}, {\"label\": \"B\", \"reason\": \"Explanation\"}]."
-                    }
-                ],
+                "messages": messages,
                 "temperature": 0.5,
                 "max_tokens": 500
             }
