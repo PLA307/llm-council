@@ -153,7 +153,7 @@ async def rank_responses(
     # Format responses for ranking
     responses_text = "\n\n".join([f"{label}: {response}" for label, response in anonymized_responses.items()])
     
-    # 修复了这里的字符串语法问题
+    # 修复了字符串语法问题，使用更简洁的方式来构建消息
     messages = [
         {
             "role": "system",
@@ -161,7 +161,7 @@ async def rank_responses(
         },
         {
             "role": "user",
-            "content": f"User Query: {user_query}\n\nResponses:\n{responses_text}\n\nPlease rank these responses from best to worst. Return only JSON in this format: [{\"label\": \"A\", \"reason\": \"Explanation\"}, {\"label\": \"B\", \"reason\": \"Explanation\"}]."
+            "content": "User Query: " + user_query + "\n\nResponses:\n" + responses_text + "\n\nPlease rank these responses from best to worst. Return only JSON in this format: [{\"label\": \"A\", \"reason\": \"Explanation\"}, {\"label\": \"B\", \"reason\": \"Explanation\"}]."
         }
     ]
     
@@ -253,7 +253,7 @@ async def synthesize_final_response(
                     },
                     {
                         "role": "user",
-                        "content": f"User Query: {user_query}\n\nCouncil Responses:\n{stage1_text}\n\nCouncil Rankings:\n{stage2_text}\n\nPlease synthesize a comprehensive final response that incorporates the best insights from all council members, considering their rankings."
+                        "content": "User Query: " + user_query + "\n\nCouncil Responses:\n" + stage1_text + "\n\nCouncil Rankings:\n" + stage2_text + "\n\nPlease synthesize a comprehensive final response that incorporates the best insights from all council members, considering their rankings."
                     }
                 ],
                 "temperature": 0.7,
