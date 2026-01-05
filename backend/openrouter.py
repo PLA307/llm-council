@@ -1,86 +1,268 @@
-"""OpenRouter API client for making LLM requests."""
+"""OpenRouter API client for LLM Council."""
 
 import httpx
 from typing import List, Dict, Any, Optional
-from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL, COUNCIL_MODELS, CHAIRMAN_MODEL
+from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
 
-
-async def query_model(
-    model: str,
-    messages: List[Dict[str, str]],
-    api_key: Optional[str] = None,
-    timeout: float = 120.0
-) -> Optional[Dict[str, Any]]:
+async def get_model_response(
+    user_query: str,
+    model: str = "openai/gpt-5.1",
+    api_key: str = None,
+    history_context: str = None,
+    files: List[Dict[str, Any]] = None
+) -> str:
     """
-    Query a single model via OpenRouter API.
-
-    Args:
-        model: OpenRouter model identifier (e.g., "openai/gpt-4o")
-        messages: List of message dicts with 'role' and 'content'
-        api_key: OpenRouter API key (optional, uses config default if not provided)
-        timeout: Request timeout in seconds
-
-    Returns:
-        Response dict with 'content' and optional 'reasoning_details', or None if failed
-    """
-    # Use provided API key or fallback to config
-    actual_api_key = api_key or OPENROUTER_API_KEY
+    Get a response from a specific LLM model via OpenRouter API.
     
-    headers = {
-        "Authorization": f"Bearer {actual_api_key}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "model": model,
-        "messages": messages,
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                OPENROUTER_API_URL,
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-
-            data = response.json()
-            message = data['choices'][0]['message']
-
-            return {
-                'content': message.get('content'),
-                'reasoning_details': message.get('reasoning_details')
-            }
-
-    except Exception as e:
-        print(f"Error querying model {model}: {e}")
-        return None
-
-
-async def query_models_parallel(
-    models: List[str],
-    messages: List[Dict[str, str]],
-    api_key: Optional[str] = None
-) -> Dict[str, Optional[Dict[str, Any]]]:
-    """
-    Query multiple models in parallel.
-
     Args:
-        models: List of OpenRouter model identifiers
-        messages: List of message dicts to send to each model
-        api_key: OpenRouter API key (optional, uses config default if not provided)
-
+        user_query: The user's query
+        model: The model to use
+        api_key: OpenRouter API key
+        history_context: Optional history context
+        files: Optional list of files with their content
+        
     Returns:
-        Dict mapping model identifier to response dict (or None if failed)
+        The model's response
     """
-    import asyncio
+    # Use default API key if none provided
+    if api_key is None:
+        api_key = OPENROUTER_API_KEY
+    
+    if api_key is None:
+        raise ValueError("OpenRouter API key is required")
+    
+    # Build the messages array
+    messages = []
+    
+    # Add system message
+    system_prompt = "You are a helpful AI assistant. Please provide a clear and concise response to the user's query."
+    messages.append({"role": "system", "content": system_prompt})
+    
+    # Add history context if provided
+    if history_context:
+        messages.append({"role": "system", "content": history_context})
+    
+    # Add file content if provided
+    if files:
+        file_content = "\n\n".join([f"File {i+1} ({file['name']}):\n{file['content']}" for i, file in enumerate(files)])
+        messages.append({"role": "system", "content": f"Relevant files:\n{file_content}"})
+    
+    # Add user query
+    messages.append({"role": "user", "content": user_query})
+    
+    # Make the API request
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            OPENROUTER_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/PLA307/llm-council",
+                "X-Title": "LLM Council"
+            },
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 1024
+            }
+        )
+    
+    # Handle response
+    if response.status_code != 200:
+        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
 
-    # Create tasks for all models
-    tasks = [query_model(model, messages, api_key) for model in models]
+async def generate_title(user_query: str, api_key: str = None) -> str:
+    """
+    Generate a concise title for a conversation based on the user query.
+    
+    Args:
+        user_query: The initial user query
+        api_key: OpenRouter API key
+        
+    Returns:
+        Generated title
+    """
+    # Use default API key if none provided
+    if api_key is None:
+        api_key = OPENROUTER_API_KEY
+    
+    if api_key is None:
+        raise ValueError("OpenRouter API key is required")
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            OPENROUTER_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/PLA307/llm-council",
+                "X-Title": "LLM Council"
+            },
+            json={
+                "model": "openai/gpt-5.1",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a title generator. Generate a concise, descriptive title for a conversation based on the user's query. Keep it under 15 words."
+                    },
+                    {
+                        "role": "user",
+                        "content": user_query
+                    }
+                ],
+                "temperature": 0.5,
+                "max_tokens": 20
+            }
+        )
+    
+    if response.status_code != 200:
+        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    
+    data = response.json()
+    return data["choices"][0]["message"]["content"].strip()
 
-    # Wait for all to complete
-    responses = await asyncio.gather(*tasks)
+async def rank_responses(
+    user_query: str,
+    anonymized_responses: Dict[str, str],
+    model: str = "openai/gpt-5.1",
+    api_key: str = None
+) -> List[Dict[str, Any]]:
+    """
+    Ask a model to rank the responses of other models.
+    
+    Args:
+        user_query: The original user query
+        anonymized_responses: Dict of label -> response
+        model: The model to use for ranking
+        api_key: OpenRouter API key
+        
+    Returns:
+        List of ranked responses
+    """
+    # Use default API key if none provided
+    if api_key is None:
+        api_key = OPENROUTER_API_KEY
+    
+    if api_key is None:
+        raise ValueError("OpenRouter API key is required")
+    
+    # Format responses for ranking
+    responses_text = "\n\n".join([f"{label}: {response}" for label, response in anonymized_responses.items()])
+    
+    # 修复了字符串语法问题，使用更简洁的方式来构建消息
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful AI assistant tasked with ranking responses to a user query. Please analyze all responses and rank them from best to worst based on accuracy, insight, and relevance to the query. Return your ranking in JSON format with a list of objects containing 'label' and 'reason' fields."
+        },
+        {
+            "role": "user",
+            "content": "User Query: " + user_query + "\n\nResponses:\n" + responses_text + "\n\nPlease rank these responses from best to worst. Return only JSON in this format: [{\"label\": \"A\", \"reason\": \"Explanation\"}, {\"label\": \"B\", \"reason\": \"Explanation\"}]."
+        }
+    ]
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            OPENROUTER_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/PLA307/llm-council",
+                "X-Title": "LLM Council"
+            },
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": 0.5,
+                "max_tokens": 500
+            }
+        )
+    
+    if response.status_code != 200:
+        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    
+    data = response.json()
+    content = data["choices"][0]["message"]["content"]
+    
+    # Extract JSON from response
+    import json
+    try:
+        ranking = json.loads(content)
+        return ranking
+    except json.JSONDecodeError:
+        # If model didn't return valid JSON, try to parse it
+        raise Exception(f"Failed to parse ranking response: {content}")
 
-    # Map models to their responses
-    return {model: response for model, response in zip(models, responses)}
+async def synthesize_final_response(
+    user_query: str,
+    stage1_results: List[Dict[str, Any]],
+    stage2_results: List[Dict[str, Any]],
+    model: str = "openai/gpt-5.1",
+    api_key: str = None
+) -> str:
+    """
+    Synthesize a final response from all stage 1 responses and stage 2 rankings.
+    
+    Args:
+        user_query: The original user query
+        stage1_results: Results from stage 1
+        stage2_results: Results from stage 2
+        model: The chairman model to use
+        api_key: OpenRouter API key
+        
+    Returns:
+        The final synthesized response
+    """
+    # Use default API key if none provided
+    if api_key is None:
+        api_key = OPENROUTER_API_KEY
+    
+    if api_key is None:
+        raise ValueError("OpenRouter API key is required")
+    
+    # Format stage 1 results
+    stage1_text = "\n\n".join([f"{result['model']}: {result['response']}" for result in stage1_results])
+    
+    # Format stage 2 results
+    stage2_text = ""
+    for result in stage2_results:
+        if result["ranking"]:
+            stage2_text += f"\n\n{result['model']} rankings:\n"
+            for rank, item in enumerate(result["ranking"]):
+                stage2_text += f"{rank+1}. {item['label']}: {item['reason']}\n"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            OPENROUTER_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/PLA307/llm-council",
+                "X-Title": "LLM Council"
+            },
+            json={
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are the Chairman of the LLM Council. Your role is to synthesize all the responses from the council members and their rankings into a single, comprehensive final response. Please consider all perspectives and highlight the strongest points from each response."
+                    },
+                    {
+                        "role": "user",
+                        "content": "User Query: " + user_query + "\n\nCouncil Responses:\n" + stage1_text + "\n\nCouncil Rankings:\n" + stage2_text + "\n\nPlease synthesize a comprehensive final response that incorporates the best insights from all council members, considering their rankings."
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1500
+            }
+        )
+    
+    if response.status_code != 200:
+        raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
+    
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
