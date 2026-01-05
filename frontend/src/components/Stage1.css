@@ -1,0 +1,104 @@
+/* Stage1.css */
+.stage1 {
+  margin-bottom: 24px;
+}
+
+.stage-header {
+  margin-bottom: 16px;
+}
+
+.stage-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 4px 0;
+}
+
+.stage-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.stage1-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stage1-answer {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.stage1-answer:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.model-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.error-indicator {
+  color: var(--error-color);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.quote-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quote-btn:hover:not(.quoted) {
+  opacity: 0.9;
+}
+
+.quote-btn.quoted {
+  background-color: var(--success-color);
+  cursor: default;
+}
+
+.answer-content {
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.error-message {
+  color: var(--error-color);
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stage1 {
+    margin-bottom: 16px;
+  }
+  
+  .stage1-answer {
+    padding: 12px;
+  }
+}

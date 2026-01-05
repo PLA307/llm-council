@@ -1,0 +1,176 @@
+/* Stage2.css */
+.stage2 {
+  margin-bottom: 24px;
+}
+
+.stage-header {
+  margin-bottom: 16px;
+}
+
+.stage-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 4px 0;
+}
+
+.stage-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* 汇总排名 */
+.aggregate-rankings {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.aggregate-rankings h4 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0 0 12px 0;
+}
+
+.rankings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--hover-color);
+  border-radius: 6px;
+}
+
+.ranking-position {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-right: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.ranking-model {
+  flex: 1;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.ranking-score {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 各模型的评价 */
+.stage2-evaluations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stage2-evaluation {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.stage2-evaluation:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.evaluation-header {
+  margin-bottom: 12px;
+}
+
+.evaluator-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.evaluation-content {
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.error-message {
+  color: var(--error-color);
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* 评价排名 */
+.rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ranking {
+  display: flex;
+  gap: 12px;
+}
+
+.rank-number {
+  font-weight: 600;
+  color: var(--primary-color);
+  min-width: 20px;
+  text-align: right;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.rank-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rank-label {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.rank-reason {
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.no-rankings {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stage2 {
+    margin-bottom: 16px;
+  }
+  
+  .aggregate-rankings {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .stage2-evaluation {
+    padding: 12px;
+  }
+}
