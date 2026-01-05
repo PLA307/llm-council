@@ -1,6 +1,6 @@
 """FastAPI backend for LLM Council."""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -53,6 +53,7 @@ class Conversation(BaseModel):
     created_at: str
     title: str
     messages: List[Dict[str, Any]]
+    client_id: Optional[str] = None
 
 
 @app.get("/")
@@ -62,36 +63,55 @@ async def root():
 
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])
-async def list_conversations():
-    """List all conversations (metadata only)."""
-    return storage.list_conversations()
+async def list_conversations(x_client_id: Optional[str] = Header(None, alias="X-Client-ID")):
+    """
+    List all conversations (metadata only).
+    If X-Client-ID header is provided, filters by that ID.
+    """
+    return storage.list_conversations(client_id=x_client_id)
 
 
 @app.post("/api/conversations", response_model=Conversation)
-async def create_conversation(request: CreateConversationRequest):
-    """Create a new conversation."""
+async def create_conversation(
+    request: CreateConversationRequest,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
+    """
+    Create a new conversation.
+    Associates with X-Client-ID if provided.
+    """
     conversation_id = str(uuid.uuid4())
-    conversation = storage.create_conversation(conversation_id)
+    conversation = storage.create_conversation(conversation_id, client_id=x_client_id)
     return conversation
 
 
 @app.get("/api/conversations/{conversation_id}", response_model=Conversation)
-async def get_conversation(conversation_id: str):
-    """Get a specific conversation with all its messages."""
-    conversation = storage.get_conversation(conversation_id)
+async def get_conversation(
+    conversation_id: str,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
+    """
+    Get a specific conversation with all its messages.
+    Verifies ownership if X-Client-ID is provided.
+    """
+    conversation = storage.get_conversation(conversation_id, client_id=x_client_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
 
 
 @app.post("/api/conversations/{conversation_id}/message")
-async def send_message(conversation_id: str, request: SendMessageRequest):
+async def send_message(
+    conversation_id: str, 
+    request: SendMessageRequest,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
     """
     Send a message and run the 3-stage council process.
     Returns the complete response with all stages.
     """
     # Check if conversation exists
-    conversation = storage.get_conversation(conversation_id)
+    conversation = storage.get_conversation(conversation_id, client_id=x_client_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
@@ -187,14 +207,18 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
 
 
 @app.post("/api/conversations/{conversation_id}/message/stream")
-async def send_message_stream(conversation_id: str, request: SendMessageRequest):
+async def send_message_stream(
+    conversation_id: str, 
+    request: SendMessageRequest,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
     """
     Send a message and stream the 3-stage council process.
     Returns Server-Sent Events as each stage completes.
     """
     print(f"DEBUG Backend: 收到消息流请求，文件数据: {request.files}")
     # Check if conversation exists
-    conversation = storage.get_conversation(conversation_id)
+    conversation = storage.get_conversation(conversation_id, client_id=x_client_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
@@ -327,10 +351,18 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
 
 @app.delete("/api/conversations/{conversation_id}")
-async def delete_conversation_endpoint(conversation_id: str):
+async def delete_conversation_endpoint(
+    conversation_id: str,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
     """
     Delete a conversation.
     """
+    # Verify ownership before deletion
+    conversation = storage.get_conversation(conversation_id, client_id=x_client_id)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
     success = storage.delete_conversation(conversation_id)
     if not success:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -338,12 +370,16 @@ async def delete_conversation_endpoint(conversation_id: str):
 
 
 @app.put("/api/conversations/{conversation_id}/title")
-async def update_conversation_title_endpoint(conversation_id: str, request: dict):
+async def update_conversation_title_endpoint(
+    conversation_id: str, 
+    request: dict,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
     """
     Update the title of a conversation.
     """
-    # Check if conversation exists
-    conversation = storage.get_conversation(conversation_id)
+    # Check if conversation exists and check ownership
+    conversation = storage.get_conversation(conversation_id, client_id=x_client_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
@@ -355,12 +391,17 @@ async def update_conversation_title_endpoint(conversation_id: str, request: dict
 
 
 @app.put("/api/conversations/{conversation_id}/messages/{message_index}/regenerate-stage3")
-async def regenerate_stage3_endpoint(conversation_id: str, message_index: int, request: dict):
+async def regenerate_stage3_endpoint(
+    conversation_id: str, 
+    message_index: int, 
+    request: dict,
+    x_client_id: Optional[str] = Header(None, alias="X-Client-ID")
+):
     """
     Regenerate stage 3 result for a specific message.
     """
-    # Check if conversation exists
-    conversation = storage.get_conversation(conversation_id)
+    # Check if conversation exists and check ownership
+    conversation = storage.get_conversation(conversation_id, client_id=x_client_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     

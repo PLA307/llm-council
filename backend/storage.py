@@ -18,12 +18,13 @@ def get_conversation_path(conversation_id: str) -> str:
     return os.path.join(DATA_DIR, f"{conversation_id}.json")
 
 
-def create_conversation(conversation_id: str) -> Dict[str, Any]:
+def create_conversation(conversation_id: str, client_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Create a new conversation.
 
     Args:
         conversation_id: Unique identifier for the conversation
+        client_id: Optional client identifier for data isolation
 
     Returns:
         New conversation dict
@@ -34,7 +35,8 @@ def create_conversation(conversation_id: str) -> Dict[str, Any]:
         "id": conversation_id,
         "created_at": datetime.utcnow().isoformat(),
         "title": "New Conversation",
-        "messages": []
+        "messages": [],
+        "client_id": client_id
     }
 
     # Save to file
@@ -45,15 +47,16 @@ def create_conversation(conversation_id: str) -> Dict[str, Any]:
     return conversation
 
 
-def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
+def get_conversation(conversation_id: str, client_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     Load a conversation from storage.
 
     Args:
         conversation_id: Unique identifier for the conversation
+        client_id: Optional client identifier for verification
 
     Returns:
-        Conversation dict or None if not found
+        Conversation dict or None if not found or unauthorized
     """
     path = get_conversation_path(conversation_id)
 
@@ -61,7 +64,13 @@ def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
         return None
 
     with open(path, 'r') as f:
-        return json.load(f)
+        conversation = json.load(f)
+        
+    # Check ownership if client_id is provided and conversation has an owner
+    if client_id and conversation.get("client_id") and conversation.get("client_id") != client_id:
+        return None
+        
+    return conversation
 
 
 def save_conversation(conversation: Dict[str, Any]):
@@ -78,9 +87,12 @@ def save_conversation(conversation: Dict[str, Any]):
         json.dump(conversation, f, indent=2)
 
 
-def list_conversations() -> List[Dict[str, Any]]:
+def list_conversations(client_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     List all conversations (metadata only).
+    
+    Args:
+        client_id: Optional client identifier to filter conversations
 
     Returns:
         List of conversation metadata dicts
@@ -91,15 +103,31 @@ def list_conversations() -> List[Dict[str, Any]]:
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.json'):
             path = os.path.join(DATA_DIR, filename)
-            with open(path, 'r') as f:
-                data = json.load(f)
-                # Return metadata only
-                conversations.append({
-                    "id": data["id"],
-                    "created_at": data["created_at"],
-                    "title": data.get("title", "New Conversation"),
-                    "message_count": len(data["messages"])
-                })
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    
+                    # Filter by client_id if provided
+                    # If conversation has no client_id (legacy), only show if no client_id requested (or handle as public/hidden)
+                    # Policy: 
+                    # 1. If requesting with client_id: only show conversations matching that client_id
+                    # 2. If requesting without client_id (admin/legacy): show everything (or legacy only)
+                    # Current impl: If client_id provided, strict match. Legacy data (no client_id) is hidden from new clients.
+                    
+                    if client_id:
+                        if data.get("client_id") != client_id:
+                            continue
+                            
+                    # Return metadata only
+                    conversations.append({
+                        "id": data["id"],
+                        "created_at": data["created_at"],
+                        "title": data.get("title", "New Conversation"),
+                        "message_count": len(data["messages"])
+                    })
+            except Exception as e:
+                print(f"Error reading conversation {filename}: {e}")
+                continue
 
     # Sort by creation time, newest first
     conversations.sort(key=lambda x: x["created_at"], reverse=True)

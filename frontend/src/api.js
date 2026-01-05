@@ -16,13 +16,35 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 console.log('Configured API Base URL:', API_BASE);
 
+// 获取或生成客户端 ID
+const getClientId = () => {
+  let clientId = localStorage.getItem('llm_council_client_id');
+  if (!clientId) {
+    clientId = crypto.randomUUID();
+    localStorage.setItem('llm_council_client_id', clientId);
+  }
+  return clientId;
+};
+
+const CLIENT_ID = getClientId();
+console.log('Client ID:', CLIENT_ID);
+
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+  'X-Client-ID': CLIENT_ID,
+});
+
 export const api = {
   /**
    * List all conversations.
    */
   async listConversations() {
     try {
-      const response = await fetch(`${API_BASE}/api/conversations`);
+      const response = await fetch(`${API_BASE}/api/conversations`, {
+        headers: {
+          'X-Client-ID': CLIENT_ID,
+        },
+      });
       if (!response.ok) {
         throw new Error(`Failed to list conversations: ${response.status} ${response.statusText}`);
       }
@@ -39,9 +61,7 @@ export const api = {
   async createConversation() {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify({}),
     });
     if (!response.ok) {
@@ -55,7 +75,11 @@ export const api = {
    */
   async getConversation(conversationId) {
     const response = await fetch(
-      `${API_BASE}/api/conversations/${conversationId}`
+      `${API_BASE}/api/conversations/${conversationId}`, {
+        headers: {
+          'X-Client-ID': CLIENT_ID,
+        },
+      }
     );
     if (!response.ok) {
       throw new Error('Failed to get conversation');
@@ -75,9 +99,7 @@ export const api = {
       `${API_BASE}/api/conversations/${conversationId}/message`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify({ 
           content,
           quoted_items: quotedItems,
@@ -126,9 +148,7 @@ export const api = {
       `${API_BASE}/api/conversations/${conversationId}/message/stream`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify(body),
       }
     );
@@ -169,9 +189,7 @@ export const api = {
   async deleteConversation(conversationId) {
     const response = await fetch(`${API_BASE}/api/conversations/${conversationId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
     });
     
     if (!response.ok) {
@@ -190,9 +208,7 @@ export const api = {
   async updateConversationTitle(conversationId, title) {
     const response = await fetch(`${API_BASE}/api/conversations/${conversationId}/title`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify({ title }),
     });
     
@@ -215,9 +231,7 @@ export const api = {
     
     const response = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages/${messageIndex}/regenerate-stage3`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify({ 
         api_key: apiKey,
         chairman_model: chairmanModel
