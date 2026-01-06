@@ -577,8 +577,9 @@ export default function ChatInterface({
         )}
         
         {/* 文件上传区域 */}
-        {/* 隐藏的文件输入框，支持多文件选择 */}
+        {/* 隐藏的文件输入框，支持多文件选择，使用 ID 供 label 关联 */}
         <input
+          id="file-upload-input"
           type="file"
           ref={fileInputRef}
           style={{ display: 'none' }}
@@ -682,18 +683,19 @@ export default function ChatInterface({
           />
           
           <div className="send-upload-container">
-            {/* 拖放区域 - 圆形样式 */}
-            <div 
+            {/* 拖放区域 - 使用 label 替代 div 以获得原生点击支持 */}
+            <label 
+              htmlFor="file-upload-input"
               className={`upload-area circular ${isDragging ? 'dragging' : ''}`}
               onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={triggerFileSelect}
               title="拖放Markdown文件到此处或点击选择文件"
+              style={{ cursor: 'pointer' }}
             >
               <div className="upload-icon">📁</div>
-            </div>
+            </label>
             
             <button
               type="submit"
