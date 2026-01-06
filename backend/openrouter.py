@@ -28,6 +28,13 @@ async def query_model(
     if api_key is None:
         raise ValueError("OpenRouter API key is required")
     
+    # Clean model name - remove any duplicated parts (e.g., google/google/gemini...)
+    if "/" in model:
+        parts = model.split("/")
+        # If the first part is repeated, remove one (e.g., google/google -> google)
+        if len(parts) >= 2 and parts[0] == parts[1]:
+            model = "/".join(parts[1:])
+    
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
