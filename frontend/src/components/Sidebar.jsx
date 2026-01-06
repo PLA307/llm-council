@@ -253,7 +253,13 @@ export default function Sidebar({
           {/* 设置面板 */}
           {showSettings && (
             <div className="settings-panel">
-              <h3>设置</h3>
+              <div className="settings-header">
+                <h3>设置</h3>
+                <div className="settings-header-actions">
+                  <button className="save-btn" onClick={saveSettings}>保存</button>
+                  <button className="cancel-btn" onClick={() => setShowSettings(false)}>取消</button>
+                </div>
+              </div>
               
               <div className="setting-group">
                 <label>OpenRouter API Key</label>
@@ -347,11 +353,6 @@ export default function Sidebar({
                 <div className="model-hint">
                   <p className="hint-text">您可以自由组合 1-4 个模型。模型 ID 可参考 OpenRouter 列表。</p>
                 </div>
-              </div>
-
-              <div className="setting-actions">
-                <button className="save-btn" onClick={saveSettings}>保存设置</button>
-                <button className="cancel-btn" onClick={() => setShowSettings(false)}>取消</button>
               </div>
 
               <div className="setting-help">

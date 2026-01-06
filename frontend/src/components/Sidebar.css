@@ -575,87 +575,74 @@
   flex-direction: column;
 }
 
+/* 设置面板头部 */
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
 .settings-panel h3 {
-  margin: 0 0 20px 0;
+  margin: 0;
   color: #333;
   font-size: 18px;
   font-weight: 600;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-.app.dark .settings-panel {
-  background: #2d2d2d;
+.settings-header-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.app.dark .settings-panel h3 {
-  color: #e0e0e0;
+.app.dark .settings-header {
   border-bottom-color: #444;
 }
 
-/* 隐藏侧边栏其他内容当设置面板打开时 */
-.sidebar:has(.settings-panel) .conversation-list,
-.sidebar:has(.settings-panel) .bottom-actions {
-  display: none;
-}
-
-.setting-group {
-  margin-bottom: 16px;
-}
-
-.setting-group label {
-  display: block;
-  margin-bottom: 6px;
-  color: #666;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.setting-group input,
-.setting-group textarea {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background: #ffffff;
-  color: #333;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  min-height: 80px;
-}
-
-.setting-group input:focus,
-.setting-group textarea:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
-}
-
-.setting-actions {
+/* 统一输入框和选择器高度 */
+.add-model-row {
   display: flex;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 8px;
+  align-items: stretch;
 }
 
-.save-btn, .cancel-btn {
+.model-select,
+.custom-model-input {
   flex: 1;
-  padding: 8px 16px;
+  padding: 0 10px;
+  height: 36px; /* 统一高度 */
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  font-size: 14px;
+  background: #fff;
+  font-size: 13px;
+  color: #333;
+  box-sizing: border-box;
+  line-height: normal; /* 让浏览器自动处理垂直居中 */
+}
+
+/* 统一按钮高度 */
+.add-model-btn,
+.save-btn,
+.cancel-btn {
+  padding: 0 16px;
+  height: 36px; /* 统一高度 */
+  border-radius: 4px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .save-btn {
   background: #4a90e2;
-  border-color: #4a90e2;
+  border: 1px solid #4a90e2;
   color: #ffffff;
 }
 
@@ -666,11 +653,17 @@
 
 .cancel-btn {
   background: #f0f0f0;
+  border: 1px solid #e0e0e0;
   color: #333;
 }
 
 .cancel-btn:hover {
   background: #e0e0e0;
+}
+
+/* 移除旧的按钮样式 */
+.setting-actions {
+  display: none;
 }
 
 .setting-help {
