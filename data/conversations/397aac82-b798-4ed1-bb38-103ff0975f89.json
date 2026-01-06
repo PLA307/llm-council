@@ -2,6 +2,16 @@
   "id": "397aac82-b798-4ed1-bb38-103ff0975f89",
   "created_at": "2026-01-06T02:25:03.605108",
   "title": "New Conversation",
-  "messages": [],
+  "messages": [
+    {
+      "role": "user",
+      "content": "\u603b\u7ed3",
+      "files": [
+        {
+          "name": "2025-12-17\u4e2d\u592e\u7ecf\u6d4e\u5de5\u4f5c\u4f1a\u8bae.md"
+        }
+      ]
+    }
+  ],
   "client_id": "8097e9fb-769a-49f4-b3a2-739d8bfb833d"
 }
