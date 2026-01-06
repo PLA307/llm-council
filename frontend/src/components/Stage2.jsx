@@ -17,8 +17,16 @@ function deAnonymizeText(text, labelToModel) {
 export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
   const [activeTab, setActiveTab] = useState(0);
 
+  // 确保 rankings 存在且不为空，如果为空但正在加载（父组件控制），返回null或加载状态
   if (!rankings || rankings.length === 0) {
     return null;
+  }
+  
+  // 确保 activeTab 索引有效，如果越界则重置为0
+  // 这修复了当 rankings 更新但 activeTab 保持旧值可能导致的越界错误
+  const currentTab = activeTab >= rankings.length ? 0 : activeTab;
+  if (currentTab !== activeTab) {
+     setActiveTab(currentTab);
   }
 
   return (
@@ -35,7 +43,7 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
         {rankings.map((rank, index) => (
           <button
             key={index}
-            className={`tab ${activeTab === index ? 'active' : ''}`}
+            className={`tab ${currentTab === index ? 'active' : ''}`}
             onClick={() => setActiveTab(index)}
           >
             {rank.model.split('/')[1] || rank.model}
@@ -45,11 +53,11 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
 
       <div className="tab-content">
         <div className="ranking-model">
-          {rankings[activeTab].model}
+          {rankings[currentTab].model}
         </div>
         <div className="ranking-content markdown-content">
           <ReactMarkdown>
-            {deAnonymizeText(rankings[activeTab].ranking, labelToModel)}
+            {deAnonymizeText(rankings[currentTab].ranking, labelToModel)}
           </ReactMarkdown>
         </div>
 
