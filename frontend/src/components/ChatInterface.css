@@ -254,9 +254,8 @@
   border-left-color: rgba(45, 45, 45, 0.95);
 }
 
-/* 导航项目悬停时显示悬浮卡片 */
-.nav-item:hover .nav-item-tooltip,
-.nav-subitem:hover .nav-subitem-tooltip {
+/* 导航项目悬停时显示悬浮卡片 - 仅保留主菜单项的提示 */
+.nav-item:hover .nav-item-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) scale(1);

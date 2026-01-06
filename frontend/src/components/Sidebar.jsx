@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import './Sidebar.css';
 import { api } from '../api';
 
@@ -21,23 +21,99 @@ export default function Sidebar({
   const [editingTitle, setEditingTitle] = useState(''); // 编辑中的标题内容
   const editInputRef = useRef(null); // 编辑输入框的引用
   
-  // 推荐模型列表
-  const RECOMMENDED_MODELS = [
-    { id: "x-ai/grok-code-fast-1", name: "Grok Code Fast" },
-    { id: "xiaomi/mimo-v2-flash:free", name: "MiMo v2 Flash (Free)" },
-    { id: "nex-agi/deepseek-v3.1-nex-n1:free", name: "DeepSeek V3.1 Nex (Free)" },
-    { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
-    { id: "deepseek/deepseek-v3.2", name: "DeepSeek V3.2" },
-    { id: "x-ai/grok-4.1-fast", name: "Grok 4.1 Fast" },
-    { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
-    { id: "z-ai/glm-4.7", name: "GLM 4.7" },
-    { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro Preview" },
-    { id: "openai/gpt-5.2", name: "GPT 5.2" },
-    { id: "qwen/qwen3-235b-a22b-2507", name: "Qwen 3 235B" }
-  ];
+  // 推荐模型列表 - 使用useMemo包装以避免每次渲染都重新创建
+  const RECOMMENDED_MODELS = useMemo(() => {
+    // 所有模型列表，包含原有模型和新添加的模型
+    const allModels = [
+      { id: "x-ai/grok-code-fast-1", name: "Grok Code Fast" },
+      { id: "x-ai/grok-4.1-fast", name: "Grok 4.1 Fast" },
+      { id: "xiaomi/mimo-v2-flash:free", name: "MiMo v2 Flash (Free)" },
+      { id: "nex-agi/deepseek-v3.1-nex-n1:free", name: "DeepSeek V3.1 Nex (Free)" },
+      { id: "deepseek/deepseek-v3.2", name: "DeepSeek V3.2" },
+      { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+      { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+      { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro Preview" },
+      { id: "z-ai/glm-4.7", name: "GLM 4.7" },
+      { id: "openai/gpt-5.2", name: "GPT 5.2" },
+      { id: "openai/gpt-4o-mini", name: "GPT-4o Mini" },
+      { id: "openai/gpt-oss-120b:free", name: "GPT OSS 120B (Free)" },
+      { id: "qwen/qwen3-235b-a22b-2507", name: "Qwen 3 235B" },
+      { id: "qwen/qwen3-coder:free", name: "Qwen 3 Coder (Free)" },
+      { id: "anthropic/claude-sonnet-4.5", name: "Claude Sonnet 4.5" }
+    ];
+    
+    // 排序函数：先按系列分组，再按是否免费排序
+    const sortModels = (models) => {
+      return models.sort((a, b) => {
+        // 提取模型系列（如 "openai", "google", "x-ai" 等）
+        const getSeries = (modelId) => {
+          const parts = modelId.split('/');
+          return parts[0];
+        };
+        
+        // 检查是否为免费模型
+        const isFree = (modelId) => {
+          return modelId.includes(':free');
+        };
+        
+        // 提取模型版本
+        const getVersion = (modelId) => {
+          const parts = modelId.split('/')[1];
+          return parts;
+        };
+        
+        // 定义系列排序优先级
+        const seriesPriority = {
+          'openai': 1,
+          'google': 2,
+          'qwen': 3,
+          'anthropic': 4,
+          'deepseek': 5,
+          'nex-agi': 6,
+          'x-ai': 7,
+          'z-ai': 8,
+          'xiaomi': 9
+        };
+        
+        const seriesA = getSeries(a.id);
+        const seriesB = getSeries(b.id);
+        const isFreeA = isFree(a.id);
+        const isFreeB = isFree(b.id);
+        
+        // 先按系列优先级排序
+        if (seriesPriority[seriesA] < seriesPriority[seriesB]) return -1;
+        if (seriesPriority[seriesA] > seriesPriority[seriesB]) return 1;
+        
+        // 同系列内，先按是否免费排序（免费在前）
+        if (isFreeA && !isFreeB) return -1;
+        if (!isFreeA && isFreeB) return 1;
+        
+        // 同系列同免费状态，按模型版本排序
+        return getVersion(a.id).localeCompare(getVersion(b.id));
+      });
+    };
+    
+    // 移除重复模型
+    const uniqueModels = [];
+    const existingIds = new Set();
+    
+    allModels.forEach(model => {
+      if (!existingIds.has(model.id)) {
+        uniqueModels.push(model);
+        existingIds.add(model.id);
+      }
+    });
+    
+    // 排序后返回
+    return sortModels(uniqueModels);
+  }, []);
 
   const [customModelInput, setCustomModelInput] = useState('');
   const [selectedRecommendedModel, setSelectedRecommendedModel] = useState(RECOMMENDED_MODELS[0].id);
+  
+  // 主席模型相关状态
+  const [selectedChairmanModel, setSelectedChairmanModel] = useState('');
+  const [chairmanCustomInput, setChairmanCustomInput] = useState('');
 
   // 模拟加载配置
   useEffect(() => {
@@ -49,7 +125,19 @@ export default function Sidebar({
     setApiKey(savedApiKey);
     setSelectedModels(savedModels);
     setChairmanModel(savedChairmanModel);
-  }, []);
+    
+    // 设置主席模型的选择状态
+    if (savedChairmanModel) {
+      // 检查是否是推荐模型列表中的模型
+      const isRecommended = RECOMMENDED_MODELS.some(model => model.id === savedChairmanModel);
+      setSelectedChairmanModel(isRecommended ? savedChairmanModel : 'custom');
+      if (!isRecommended) {
+        setChairmanCustomInput(savedChairmanModel);
+      }
+    } else {
+      setSelectedChairmanModel(RECOMMENDED_MODELS[0].id);
+    }
+  }, [RECOMMENDED_MODELS]);
 
   // 保存配置
   const saveSettings = () => {
@@ -142,17 +230,27 @@ export default function Sidebar({
   }, [editingId]);
 
   // 添加模型
-  const handleAddModel = (modelId) => {
-    if (!modelId) return;
+  const handleAddModel = () => {
+    let modelIdToAdd = selectedRecommendedModel;
+    
+    // 如果选择了自定义模型选项
+    if (selectedRecommendedModel === 'custom') {
+      if (!customModelInput.trim()) {
+        alert('请输入自定义模型ID');
+        return;
+      }
+      modelIdToAdd = customModelInput.trim();
+    }
+    
     if (selectedModels.length >= 4) {
       alert('最多只能选择 4 个理事会模型');
       return;
     }
-    if (selectedModels.includes(modelId)) {
+    if (selectedModels.includes(modelIdToAdd)) {
       alert('该模型已添加');
       return;
     }
-    setSelectedModels([...selectedModels, modelId]);
+    setSelectedModels([...selectedModels, modelIdToAdd]);
     setCustomModelInput(''); // 清空自定义输入
   };
 
@@ -255,9 +353,9 @@ export default function Sidebar({
             <div className="settings-panel">
               <div className="settings-header">
                 <h3>设置</h3>
-                <div className="settings-header-actions">
-                  <button className="save-btn" onClick={saveSettings}>保存</button>
+                <div className="settings-actions-top">
                   <button className="cancel-btn" onClick={() => setShowSettings(false)}>取消</button>
+                  <button className="save-btn" onClick={saveSettings}>保存</button>
                 </div>
               </div>
               
@@ -273,12 +371,50 @@ export default function Sidebar({
 
               <div className="setting-group">
                 <label>主席模型</label>
-                <input 
-                  type="text" 
-                  value={chairmanModel} 
-                  onChange={(e) => setChairmanModel(e.target.value)}
-                  placeholder="google/gemini-3-pro-preview"
-                />
+                <div className="add-model-row">
+                  <select 
+                    className="model-select"
+                    value={selectedChairmanModel}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedChairmanModel(value);
+                      if (value === 'custom') {
+                        // 如果选择了自定义，使用自定义输入的值
+                        if (chairmanCustomInput.trim()) {
+                          setChairmanModel(chairmanCustomInput.trim());
+                        }
+                      } else {
+                        // 否则使用选择的推荐模型
+                        setChairmanModel(value);
+                        setChairmanCustomInput('');
+                      }
+                    }}
+                  >
+                    {RECOMMENDED_MODELS.map(model => (
+                      <option key={model.id} value={model.id}>
+                        {model.name}
+                      </option>
+                    ))}
+                    <option value="custom">📝 自定义模型</option>
+                  </select>
+                </div>
+                
+                {/* 主席模型自定义输入框 - 仅当选择自定义选项时显示 */}
+                {selectedChairmanModel === 'custom' && (
+                  <div className="custom-model-row">
+                    <input 
+                      type="text" 
+                      className="custom-model-input"
+                      value={chairmanCustomInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setChairmanCustomInput(value);
+                        setChairmanModel(value);
+                      }}
+                      placeholder="google/gemini-3-pro-preview"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="setting-group">
@@ -306,7 +442,7 @@ export default function Sidebar({
                   )}
                 </div>
 
-                {/* 添加模型 - 推荐列表 */}
+                {/* 添加模型 - 整合推荐列表和自定义选项 */}
                 <div className="add-model-section">
                   <div className="add-model-row">
                     <select 
@@ -320,40 +456,38 @@ export default function Sidebar({
                           {model.name}
                         </option>
                       ))}
+                      <option value="custom">📝 自定义模型</option>
                     </select>
                     <button 
                       className="add-model-btn"
-                      onClick={() => handleAddModel(selectedRecommendedModel)}
+                      onClick={handleAddModel}
                       disabled={selectedModels.length >= 4}
                     >
                       添加
                     </button>
                   </div>
 
-                  {/* 添加模型 - 自定义输入 */}
-                  <div className="add-model-row">
-                    <input 
-                      type="text" 
-                      className="custom-model-input"
-                      value={customModelInput}
-                      onChange={(e) => setCustomModelInput(e.target.value)}
-                      placeholder="自定义模型ID (如 openai/gpt-4)"
-                      disabled={selectedModels.length >= 4}
-                    />
-                    <button 
-                      className="add-model-btn secondary"
-                      onClick={() => handleAddModel(customModelInput)}
-                      disabled={selectedModels.length >= 4 || !customModelInput.trim()}
-                    >
-                      添加
-                    </button>
-                  </div>
+                  {/* 自定义模型输入框 - 仅当选择自定义选项时显示 */}
+                  {selectedRecommendedModel === 'custom' && (
+                    <div className="custom-model-row">
+                      <input 
+                        type="text" 
+                        className="custom-model-input"
+                        value={customModelInput}
+                        onChange={(e) => setCustomModelInput(e.target.value)}
+                        placeholder="自定义模型ID (如 openai/gpt-4)"
+                        disabled={selectedModels.length >= 4}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="model-hint">
                   <p className="hint-text">您可以自由组合 1-4 个模型。模型 ID 可参考 OpenRouter 列表。</p>
                 </div>
               </div>
+
+              {/* 底部按钮已移除，移动到了头部 */}
 
               <div className="setting-help">
                 <h4>使用说明：</h4>
