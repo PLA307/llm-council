@@ -562,17 +562,41 @@
 
 /* 设置面板 */
 .settings-panel {
+  position: absolute;
+  top: 52px; /* 侧边栏头部高度 */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8f8f8;
+  z-index: 20;
   padding: 16px;
-  border-top: 1px solid #e0e0e0;
-  background: #fafafa;
-  max-height: 400px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-panel h3 {
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
   color: #333;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.app.dark .settings-panel {
+  background: #2d2d2d;
+}
+
+.app.dark .settings-panel h3 {
+  color: #e0e0e0;
+  border-bottom-color: #444;
+}
+
+/* 隐藏侧边栏其他内容当设置面板打开时 */
+.sidebar:has(.settings-panel) .conversation-list,
+.sidebar:has(.settings-panel) .bottom-actions {
+  display: none;
 }
 
 .setting-group {
@@ -823,4 +847,175 @@
 
 .app.dark .model-list {
   color: #3a7bc8;
+}
+
+/* 模型选择器样式 */
+.selected-models-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  min-height: 42px;
+}
+
+.no-models-tip {
+  color: #999;
+  font-size: 13px;
+  padding: 4px;
+}
+
+.model-chip {
+  display: flex;
+  align-items: center;
+  background: #e8f0fe;
+  border: 1px solid #d0e0fd;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: #1a73e8;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.model-chip-name {
+  margin-right: 6px;
+}
+
+.model-chip-remove {
+  background: none;
+  border: none;
+  color: #1a73e8;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.model-chip-remove:hover {
+  background: rgba(26, 115, 232, 0.1);
+  color: #d93025;
+}
+
+.add-model-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.add-model-row {
+  display: flex;
+  gap: 8px;
+}
+
+.model-select {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+  color: #333;
+}
+
+.custom-model-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.add-model-btn {
+  padding: 0 16px;
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.add-model-btn:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.add-model-btn.secondary {
+  background: #f0f0f0;
+  color: #333;
+  border: 1px solid #e0e0e0;
+}
+
+.add-model-btn.secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.add-model-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 深色模式适配 */
+.app.dark .selected-models-container {
+  background: #3d3d3d;
+  border-color: #555;
+}
+
+.app.dark .model-chip {
+  background: #1e3a5f;
+  border-color: #3a7bc8;
+  color: #61dafb;
+}
+
+.app.dark .model-chip-remove {
+  color: #61dafb;
+}
+
+.app.dark .model-chip-remove:hover {
+  background: rgba(97, 218, 251, 0.1);
+  color: #ff6b6b;
+}
+
+.app.dark .model-select {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .custom-model-input {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .add-model-btn.secondary {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.app.dark .add-model-btn.secondary:hover:not(:disabled) {
+  background: #4d4d4d;
+}
+
+.app.dark .add-model-btn:disabled {
+  background: #555;
+  color: #888;
 }

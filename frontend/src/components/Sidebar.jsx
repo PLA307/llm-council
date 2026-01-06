@@ -20,6 +20,24 @@ export default function Sidebar({
   const [editingId, setEditingId] = useState(null); // 当前正在编辑的对话ID
   const [editingTitle, setEditingTitle] = useState(''); // 编辑中的标题内容
   const editInputRef = useRef(null); // 编辑输入框的引用
+  
+  // 推荐模型列表
+  const RECOMMENDED_MODELS = [
+    { id: "x-ai/grok-code-fast-1", name: "Grok Code Fast" },
+    { id: "xiaomi/mimo-v2-flash:free", name: "MiMo v2 Flash (Free)" },
+    { id: "nex-agi/deepseek-v3.1-nex-n1:free", name: "DeepSeek V3.1 Nex (Free)" },
+    { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+    { id: "deepseek/deepseek-v3.2", name: "DeepSeek V3.2" },
+    { id: "x-ai/grok-4.1-fast", name: "Grok 4.1 Fast" },
+    { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+    { id: "z-ai/glm-4.7", name: "GLM 4.7" },
+    { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro Preview" },
+    { id: "openai/gpt-5.2", name: "GPT 5.2" },
+    { id: "qwen/qwen3-235b-a22b-2507", name: "Qwen 3 235B" }
+  ];
+
+  const [customModelInput, setCustomModelInput] = useState('');
+  const [selectedRecommendedModel, setSelectedRecommendedModel] = useState(RECOMMENDED_MODELS[0].id);
 
   // 模拟加载配置
   useEffect(() => {
@@ -122,6 +140,26 @@ export default function Sidebar({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [editingId]);
+
+  // 添加模型
+  const handleAddModel = (modelId) => {
+    if (!modelId) return;
+    if (selectedModels.length >= 4) {
+      alert('最多只能选择 4 个理事会模型');
+      return;
+    }
+    if (selectedModels.includes(modelId)) {
+      alert('该模型已添加');
+      return;
+    }
+    setSelectedModels([...selectedModels, modelId]);
+    setCustomModelInput(''); // 清空自定义输入
+  };
+
+  // 移除模型
+  const handleRemoveModel = (modelId) => {
+    setSelectedModels(selectedModels.filter(id => id !== modelId));
+  };
 
   return (
     <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
@@ -238,18 +276,78 @@ export default function Sidebar({
               </div>
 
               <div className="setting-group">
-              <label>理事会模型（每行一个）</label>
-              <textarea 
-                value={selectedModels.join('\n')} 
-                onChange={(e) => setSelectedModels(e.target.value.split('\n').filter(m => m.trim()))}
-                placeholder="openai/gpt-5.1\ngoogle/gemini-3-pro-preview\nanthropic/claude-sonnet-4.5\nx-ai/grok-4"
-                rows={4}
-              />
-              <div className="model-hint">
-                <p className="hint-text">注意：自定义模型可能存在调用限制或不可用情况，系统会自动过滤掉无法调用的模型。</p>
-                <p className="model-list">当前选择的模型：{selectedModels.length > 0 ? selectedModels.join(', ') : '无'}</p>
+                <label>理事会模型（{selectedModels.length}/4）</label>
+                
+                {/* 已选模型列表 */}
+                <div className="selected-models-container">
+                  {selectedModels.length === 0 ? (
+                    <div className="no-models-tip">请添加模型</div>
+                  ) : (
+                    selectedModels.map((modelId) => (
+                      <div key={modelId} className="model-chip">
+                        <span className="model-chip-name">
+                          {RECOMMENDED_MODELS.find(m => m.id === modelId)?.name || modelId.split('/').pop()}
+                        </span>
+                        <button 
+                          className="model-chip-remove"
+                          onClick={() => handleRemoveModel(modelId)}
+                          title="移除"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* 添加模型 - 推荐列表 */}
+                <div className="add-model-section">
+                  <div className="add-model-row">
+                    <select 
+                      className="model-select"
+                      value={selectedRecommendedModel}
+                      onChange={(e) => setSelectedRecommendedModel(e.target.value)}
+                      disabled={selectedModels.length >= 4}
+                    >
+                      {RECOMMENDED_MODELS.map(model => (
+                        <option key={model.id} value={model.id}>
+                          {model.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button 
+                      className="add-model-btn"
+                      onClick={() => handleAddModel(selectedRecommendedModel)}
+                      disabled={selectedModels.length >= 4}
+                    >
+                      添加
+                    </button>
+                  </div>
+
+                  {/* 添加模型 - 自定义输入 */}
+                  <div className="add-model-row">
+                    <input 
+                      type="text" 
+                      className="custom-model-input"
+                      value={customModelInput}
+                      onChange={(e) => setCustomModelInput(e.target.value)}
+                      placeholder="自定义模型ID (如 openai/gpt-4)"
+                      disabled={selectedModels.length >= 4}
+                    />
+                    <button 
+                      className="add-model-btn secondary"
+                      onClick={() => handleAddModel(customModelInput)}
+                      disabled={selectedModels.length >= 4 || !customModelInput.trim()}
+                    >
+                      添加
+                    </button>
+                  </div>
+                </div>
+
+                <div className="model-hint">
+                  <p className="hint-text">您可以自由组合 1-4 个模型。模型 ID 可参考 OpenRouter 列表。</p>
+                </div>
               </div>
-            </div>
 
               <div className="setting-actions">
                 <button className="save-btn" onClick={saveSettings}>保存设置</button>
