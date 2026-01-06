@@ -190,6 +190,8 @@ function App() {
         ...prev,
         messages: prev.messages.slice(0, -2),
       }));
+    } finally {
+      // Ensure loading state is reset even if stream ends without complete event
       setIsLoading(false);
     }
   };

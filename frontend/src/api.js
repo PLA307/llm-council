@@ -95,6 +95,10 @@ export const api = {
     const selectedModels = JSON.parse(localStorage.getItem('selectedModels') || '[]');
     const chairmanModel = localStorage.getItem('chairmanModel') || '';
 
+    // Use null for empty values to trigger backend defaults
+    const councilModelsParam = selectedModels.length > 0 ? selectedModels : null;
+    const chairmanModelParam = chairmanModel || null;
+
     const response = await fetch(
       `${API_BASE}/api/conversations/${conversationId}/message`,
       {
@@ -105,8 +109,8 @@ export const api = {
           quoted_items: quotedItems,
           files: fileData,
           api_key: apiKey,
-          council_models: selectedModels,
-          chairman_model: chairmanModel
+          council_models: councilModelsParam,
+          chairman_model: chairmanModelParam
         }),
       }
     );
@@ -131,6 +135,10 @@ export const api = {
     const selectedModels = JSON.parse(localStorage.getItem('selectedModels') || '[]');
     const chairmanModel = localStorage.getItem('chairmanModel') || '';
     
+    // Use null for empty values to trigger backend defaults
+    const councilModelsParam = selectedModels.length > 0 ? selectedModels : null;
+    const chairmanModelParam = chairmanModel || null;
+    
     console.log('DEBUG API: sendMessageStream called with fileData:', fileData);
     
     const body = {
@@ -138,8 +146,8 @@ export const api = {
       quoted_items: quotedItems,
       files: fileData,
       api_key: apiKey,
-      council_models: selectedModels,
-      chairman_model: chairmanModel
+      council_models: councilModelsParam,
+      chairman_model: chairmanModelParam
     };
     
     console.log('DEBUG API: 发送到后端的完整请求体:', body);
@@ -160,24 +168,28 @@ export const api = {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          try {
-            const event = JSON.parse(data);
-            onEvent(event.type, event);
-          } catch (e) {
-            console.error('Failed to parse SSE event:', e);
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            try {
+              const event = JSON.parse(data);
+              onEvent(event.type, event);
+            } catch (e) {
+              console.error('Failed to parse SSE event:', e);
+            }
           }
         }
       }
+    } finally {
+      reader.releaseLock();
     }
   },
 
