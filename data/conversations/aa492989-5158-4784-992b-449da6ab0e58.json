@@ -27,6 +27,10 @@
         "model": "google/gemini-2.5-flash-lite",
         "response": "Error: Unable to generate final synthesis."
       }
+    },
+    {
+      "role": "user",
+      "content": "nihao"
     }
   ],
   "client_id": "42aad638-75ac-427d-9f9c-608ba12053ac"
