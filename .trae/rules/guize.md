@@ -1,1 +1,4 @@
+---
+alwaysApply: true
+---
 请参考 PROJECT_RULES.md 来理解项目架构和部署规则。
