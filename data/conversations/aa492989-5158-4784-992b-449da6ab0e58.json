@@ -31,6 +31,15 @@
     {
       "role": "user",
       "content": "nihao"
+    },
+    {
+      "role": "assistant",
+      "stage1": [],
+      "stage2": [],
+      "stage3": {
+        "model": "openai/gpt-oss-120b:free",
+        "response": "Error: Unable to generate final synthesis."
+      }
     }
   ],
   "client_id": "42aad638-75ac-427d-9f9c-608ba12053ac"
