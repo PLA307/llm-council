@@ -217,9 +217,11 @@ Provide a clear, well-reasoned final answer that represents the council's collec
 
     if response is None:
         # Fallback if chairman fails
+        error_msg = f"主席模型 ({chairman_to_use}) 生成总结失败。可能是模型暂时不可用或超时。"
+        print(f"Error in stage3_synthesize_final: {error_msg}")
         return {
             "model": chairman_to_use,
-            "response": "Error: Unable to generate final synthesis."
+            "response": error_msg
         }
 
     return {

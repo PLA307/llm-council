@@ -2,6 +2,7 @@
 
 import json
 import os
+import threading
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -21,14 +22,22 @@ def get_conversation_path(conversation_id: str) -> str:
     return os.path.join(DATA_DIR, f"{conversation_id}.json")
 
 
+def _sync_to_github_background(filename: str, content: Dict[str, Any], message: str):
+    """Background task to sync file to GitHub."""
+    try:
+        github_storage.save_file(filename, content, message)
+    except Exception as e:
+        print(f"Error syncing to GitHub in background: {e}")
+
+
 def create_conversation(conversation_id: str, client_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Create a new conversation.
-
+    
     Args:
         conversation_id: Unique identifier for the conversation
         client_id: Optional client identifier for data isolation
-
+        
     Returns:
         New conversation dict
     """
@@ -47,9 +56,13 @@ def create_conversation(conversation_id: str, client_id: Optional[str] = None) -
     with open(path, 'w') as f:
         json.dump(conversation, f, indent=2)
 
-    # Sync to GitHub
+    # Sync to GitHub (Async)
     if github_storage.enabled:
-        github_storage.save_file(f"{conversation_id}.json", conversation, f"Create conversation {conversation_id}")
+        thread = threading.Thread(
+            target=_sync_to_github_background,
+            args=(f"{conversation_id}.json", conversation, f"Create conversation {conversation_id}")
+        )
+        thread.start()
 
     return conversation
 
@@ -58,11 +71,11 @@ def get_conversation(conversation_id: str, client_id: Optional[str] = None) -> O
     """
     Load a conversation from storage.
     Tries local first, then GitHub if not found locally (and syncs back).
-
+    
     Args:
         conversation_id: Unique identifier for the conversation
         client_id: Optional client identifier for verification
-
+        
     Returns:
         Conversation dict or None if not found or unauthorized
     """
@@ -97,8 +110,8 @@ def get_conversation(conversation_id: str, client_id: Optional[str] = None) -> O
 def save_conversation(conversation: Dict[str, Any]):
     """
     Save a conversation to storage.
-    Writes to both local disk and GitHub.
-
+    Writes to local disk immediately and GitHub asynchronously.
+    
     Args:
         conversation: Conversation dict to save
     """
@@ -110,7 +123,7 @@ def save_conversation(conversation: Dict[str, Any]):
     with open(path, 'w') as f:
         json.dump(conversation, f, indent=2)
         
-    # Sync to GitHub (background task ideal, but synchronous for now for safety)
+    # Sync to GitHub (Async background task)
     if github_storage.enabled:
         # Determine message type based on last message
         msg = f"Update conversation {conversation_id}"
@@ -120,8 +133,13 @@ def save_conversation(conversation: Dict[str, Any]):
                 msg = f"User message in {conversation_id}"
             elif last_msg.get("role") == "assistant":
                 msg = f"Assistant response in {conversation_id}"
-                
-        github_storage.save_file(f"{conversation_id}.json", conversation, msg)
+        
+        # Run in a separate thread to avoid blocking the response
+        thread = threading.Thread(
+            target=_sync_to_github_background,
+            args=(f"{conversation_id}.json", conversation, msg)
+        )
+        thread.start()
 
 
 def list_conversations(client_id: Optional[str] = None) -> List[Dict[str, Any]]:
