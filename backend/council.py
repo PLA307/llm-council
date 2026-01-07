@@ -11,7 +11,7 @@ async def stage1_collect_responses(
     council_models: List[str] = None,
     history_context: Optional[str] = None,
     files: Optional[List[Dict[str, Any]]] = None
-) -> List[Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Stage 1: Collect individual responses from all council models.
 
@@ -23,7 +23,7 @@ async def stage1_collect_responses(
         files: List of files uploaded by the user, each with 'name' and 'content' keys (optional)
 
     Returns:
-        List of dicts with 'model' and 'response' keys
+        Tuple of (list of dicts with 'model' and 'response' keys, token usage stats)
     """
     # Build messages with optional history context
     messages = []
@@ -55,16 +55,35 @@ async def stage1_collect_responses(
     # Query all models in parallel with optional API key
     responses = await query_models_parallel(models_to_use, messages, api_key)
 
-    # Format results
+    # Format results and track token usage
     stage1_results = []
+    stage1_usage = {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "model_usages": {}
+    }
+    
     for model, response in responses.items():
         if response is not None:  # Only include successful responses
             stage1_results.append({
                 "model": model,
-                "response": response.get('content', '')
+                "response": response.get('content', ''),
+                "usage": response.get('usage', {})
             })
+            
+            # Track token usage
+            usage = response.get('usage', {})
+            prompt_tokens = usage.get('prompt_tokens', 0)
+            completion_tokens = usage.get('completion_tokens', 0)
+            total_tokens = usage.get('total_tokens', 0)
+            
+            stage1_usage["prompt_tokens"] += prompt_tokens
+            stage1_usage["completion_tokens"] += completion_tokens
+            stage1_usage["total_tokens"] += total_tokens
+            stage1_usage["model_usages"][model] = usage
 
-    return stage1_results
+    return stage1_results, stage1_usage
 
 
 async def stage2_collect_rankings(
@@ -72,7 +91,7 @@ async def stage2_collect_rankings(
     stage1_results: List[Dict[str, Any]],
     api_key: Optional[str] = None,
     council_models: List[str] = None
-) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
+) -> Tuple[List[Dict[str, Any]], Dict[str, str], Dict[str, Any]]:
     """
     Stage 2: Each model ranks the anonymized responses.
 
@@ -83,7 +102,7 @@ async def stage2_collect_rankings(
         council_models: List of council models to use (optional, uses config default if not provided)
 
     Returns:
-        Tuple of (rankings list, label_to_model mapping)
+        Tuple of (rankings list, label_to_model mapping, token usage stats)
     """
     # Create anonymized labels for responses (Response A, Response B, etc.)
     labels = [chr(65 + i) for i in range(len(stage1_results))]  # A, B, C, ...
@@ -142,8 +161,15 @@ Now provide your evaluation and ranking in Chinese:"""
     # Get rankings from all council models in parallel with optional API key
     responses = await query_models_parallel(models_to_use, messages, api_key)
 
-    # Format results
+    # Format results and track token usage
     stage2_results = []
+    stage2_usage = {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "model_usages": {}
+    }
+    
     for model, response in responses.items():
         if response is not None:
             full_text = response.get('content', '')
@@ -151,10 +177,22 @@ Now provide your evaluation and ranking in Chinese:"""
             stage2_results.append({
                 "model": model,
                 "ranking": full_text,
-                "parsed_ranking": parsed
+                "parsed_ranking": parsed,
+                "usage": response.get('usage', {})
             })
+            
+            # Track token usage
+            usage = response.get('usage', {})
+            prompt_tokens = usage.get('prompt_tokens', 0)
+            completion_tokens = usage.get('completion_tokens', 0)
+            total_tokens = usage.get('total_tokens', 0)
+            
+            stage2_usage["prompt_tokens"] += prompt_tokens
+            stage2_usage["completion_tokens"] += completion_tokens
+            stage2_usage["total_tokens"] += total_tokens
+            stage2_usage["model_usages"][model] = usage
 
-    return stage2_results, label_to_model
+    return stage2_results, label_to_model, stage2_usage
 
 
 async def stage3_synthesize_final(
@@ -163,7 +201,7 @@ async def stage3_synthesize_final(
     stage2_results: List[Dict[str, Any]],
     api_key: Optional[str] = None,
     chairman_model: str = None
-) -> Dict[str, Any]:
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
     Stage 3: Chairman synthesizes final response.
 
@@ -175,7 +213,7 @@ async def stage3_synthesize_final(
         chairman_model: Chairman model to use (optional, uses config default if not provided)
 
     Returns:
-        Dict with 'model' and 'response' keys
+        Tuple of (dict with 'model' and 'response' keys, token usage stats)
     """
     # Build comprehensive context for chairman
     stage1_text = "\n\n".join([
@@ -222,12 +260,24 @@ Provide a clear, well-reasoned final answer that represents the council's collec
         return {
             "model": chairman_to_use,
             "response": error_msg
+        }, {}
+
+    # Track token usage
+    usage = response.get('usage', {})
+    stage3_usage = {
+        "prompt_tokens": usage.get('prompt_tokens', 0),
+        "completion_tokens": usage.get('completion_tokens', 0),
+        "total_tokens": usage.get('total_tokens', 0),
+        "model_usages": {
+            chairman_to_use: usage
         }
+    }
 
     return {
         "model": chairman_to_use,
-        "response": response.get('content', '')
-    }
+        "response": response.get('content', ''),
+        "usage": usage
+    }, stage3_usage
 
 
 def parse_ranking_from_text(ranking_text: str) -> List[str]:
@@ -373,7 +423,7 @@ async def run_full_council(
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
     # Stage 1: Collect individual responses with optional history context
-    stage1_results = await stage1_collect_responses(
+    stage1_results, stage1_usage = await stage1_collect_responses(
         user_query,
         api_key=api_key,
         council_models=council_models,
@@ -389,7 +439,7 @@ async def run_full_council(
         }, {}
 
     # Stage 2: Collect rankings
-    stage2_results, label_to_model = await stage2_collect_rankings(
+    stage2_results, label_to_model, stage2_usage = await stage2_collect_rankings(
         user_query,
         stage1_results,
         api_key=api_key,
@@ -400,7 +450,7 @@ async def run_full_council(
     aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
 
     # Stage 3: Synthesize final answer
-    stage3_result = await stage3_synthesize_final(
+    stage3_result, stage3_usage = await stage3_synthesize_final(
         user_query,
         stage1_results,
         stage2_results,
@@ -408,10 +458,26 @@ async def run_full_council(
         chairman_model=chairman_model
     )
 
+    # Calculate total token usage
+    total_usage = {
+        "prompt_tokens": stage1_usage["prompt_tokens"] + stage2_usage["prompt_tokens"] + stage3_usage["prompt_tokens"],
+        "completion_tokens": stage1_usage["completion_tokens"] + stage2_usage["completion_tokens"] + stage3_usage["completion_tokens"],
+        "total_tokens": stage1_usage["total_tokens"] + stage2_usage["total_tokens"] + stage3_usage["total_tokens"],
+        "stage1": stage1_usage,
+        "stage2": stage2_usage,
+        "stage3": stage3_usage
+    }
+
     # Prepare metadata
     metadata = {
         "label_to_model": label_to_model,
-        "aggregate_rankings": aggregate_rankings
+        "aggregate_rankings": aggregate_rankings,
+        "token_usage": total_usage
     }
+
+    # Calculate average token cost per model in council
+    num_council_models = len(council_models) if council_models else len(COUNCIL_MODELS)
+    avg_token_cost = total_usage["total_tokens"] / num_council_models if num_council_models > 0 else 0
+    metadata["average_token_cost_per_model"] = round(avg_token_cost, 2)
 
     return stage1_results, stage2_results, stage3_result, metadata

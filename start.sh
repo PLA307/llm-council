@@ -7,7 +7,7 @@ echo ""
 
 # Start backend
 echo "Starting backend on http://localhost:8001..."
-python3 -m uv run python -m backend.main &
+python3 -m uv run --no-reload python -m backend.main &
 BACKEND_PID=$!
 
 # Wait a bit for backend to start

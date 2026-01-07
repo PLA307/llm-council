@@ -485,6 +485,7 @@ export default function Sidebar({
 
                 <div className="model-hint">
                   <p className="hint-text">您可以自由组合 1-4 个模型。模型 ID 可参考 OpenRouter 列表。</p>
+                  <p className="hint-text warning">⚠️ 注意：部分模型（特别是 Preview/Free 版本）可能会出现生成中断或返回空结果的情况，这通常是服务商 API 不稳定导致的。遇到此类问题建议更换模型重试。</p>
                 </div>
               </div>
 

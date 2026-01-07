@@ -57,11 +57,11 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
         </div>
         <div className="ranking-content markdown-content">
           <ReactMarkdown>
-            {deAnonymizeText(rankings[currentTab].ranking, labelToModel)}
+            {typeof rankings[currentTab].ranking === 'string' 
+              ? deAnonymizeText(rankings[currentTab].ranking, labelToModel)
+              : JSON.stringify(rankings[currentTab].ranking, null, 2)}
           </ReactMarkdown>
         </div>
-
-
       </div>
 
       {aggregateRankings && aggregateRankings.length > 0 && (

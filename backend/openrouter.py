@@ -58,7 +58,8 @@ async def query_model(
         if response.status_code == 200:
             data = response.json()
             return {
-                "content": data["choices"][0]["message"]["content"]
+                "content": data["choices"][0]["message"]["content"],
+                "usage": data.get("usage", {})
             }
         else:
             print(f"Error querying {model}: {response.status_code} - {response.text}")
@@ -128,7 +129,7 @@ async def get_model_response(
     messages = []
     
     # Add system message
-    system_prompt = "You are a helpful AI assistant. Please provide a clear and concise response to the user's query."
+    system_prompt = "You are a helpful AI assistant. Please provide a clear and concise response to the user's query. Ensure your response is complete and not cut off."
     messages.append({"role": "system", "content": system_prompt})
     
     # Add history context if provided
