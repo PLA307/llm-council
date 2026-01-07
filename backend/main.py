@@ -299,7 +299,7 @@ async def send_message_stream(
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(
+            stage2_results, label_to_model, _ = await stage2_collect_rankings(
                 request.content,
                 stage1_results,
                 api_key=request.api_key,
@@ -310,7 +310,7 @@ async def send_message_stream(
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(
+            stage3_result, _ = await stage3_synthesize_final(
                 request.content,
                 stage1_results,
                 stage2_results,

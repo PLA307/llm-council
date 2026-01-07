@@ -46,7 +46,7 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
             className={`tab ${currentTab === index ? 'active' : ''}`}
             onClick={() => setActiveTab(index)}
           >
-            {rank.model.split('/')[1] || rank.model}
+            {(rank.model && rank.model.split('/')[1]) || rank.model || 'Unknown Model'}
           </button>
         ))}
       </div>
@@ -75,7 +75,7 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
               <div key={index} className="aggregate-item">
                 <span className="rank-position">#{index + 1}</span>
                 <span className="rank-model">
-                  {agg.model.split('/')[1] || agg.model}
+                  {(agg.model && agg.model.split('/')[1]) || agg.model || 'Unknown Model'}
                 </span>
                 <span className="rank-score">
                   平均分：{agg.average_rank.toFixed(2)}

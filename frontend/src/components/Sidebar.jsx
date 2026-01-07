@@ -429,7 +429,7 @@ export default function Sidebar({
                     selectedModels.map((modelId) => (
                       <div key={modelId} className="model-chip">
                         <span className="model-chip-name">
-                          {RECOMMENDED_MODELS.find(m => m.id === modelId)?.name || modelId.split('/').pop()}
+                          {RECOMMENDED_MODELS.find(m => m.id === modelId)?.name || (modelId && modelId.split('/').pop()) || modelId}
                         </span>
                         <button 
                           className="model-chip-remove"
