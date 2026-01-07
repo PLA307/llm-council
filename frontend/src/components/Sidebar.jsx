@@ -32,6 +32,7 @@ export default function Sidebar({
       { id: "deepseek/deepseek-v3.2", name: "DeepSeek V3.2" },
       { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
       { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+      { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash Preview" },
       { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro Preview" },
       { id: "z-ai/glm-4.7", name: "GLM 4.7" },
       { id: "openai/gpt-5.2", name: "GPT 5.2" },
