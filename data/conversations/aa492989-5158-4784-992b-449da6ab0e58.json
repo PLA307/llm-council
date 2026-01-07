@@ -16,6 +16,15 @@
       ]
     },
     {
+      "role": "assistant",
+      "stage1": [],
+      "stage2": [],
+      "stage3": {
+        "model": "google/gemini-3-pro-preview",
+        "response": "Error: Unable to generate final synthesis."
+      }
+    },
+    {
       "role": "user",
       "content": "\u4ec0\u4e48\u662f\u4ef7\u503c\u6295\u8d44"
     },
@@ -24,22 +33,13 @@
       "stage1": [],
       "stage2": [],
       "stage3": {
-        "model": "google/gemini-2.5-flash-lite",
+        "model": "google/gemini-3-pro-preview",
         "response": "Error: Unable to generate final synthesis."
       }
     },
     {
       "role": "user",
       "content": "nihao"
-    },
-    {
-      "role": "assistant",
-      "stage1": [],
-      "stage2": [],
-      "stage3": {
-        "model": "openai/gpt-oss-120b:free",
-        "response": "Error: Unable to generate final synthesis."
-      }
     }
   ],
   "client_id": "42aad638-75ac-427d-9f9c-608ba12053ac"
