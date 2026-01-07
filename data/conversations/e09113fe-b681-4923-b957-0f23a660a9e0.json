@@ -2,6 +2,11 @@
   "id": "e09113fe-b681-4923-b957-0f23a660a9e0",
   "created_at": "2026-01-07T02:21:21.996765",
   "title": "New Conversation",
-  "messages": [],
+  "messages": [
+    {
+      "role": "user",
+      "content": "\u4eca\u5929\u65e5\u671f"
+    }
+  ],
   "client_id": "42aad638-75ac-427d-9f9c-608ba12053ac"
 }
