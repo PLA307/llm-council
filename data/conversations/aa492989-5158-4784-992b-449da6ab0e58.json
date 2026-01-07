@@ -18,6 +18,15 @@
     {
       "role": "user",
       "content": "\u4ec0\u4e48\u662f\u4ef7\u503c\u6295\u8d44"
+    },
+    {
+      "role": "assistant",
+      "stage1": [],
+      "stage2": [],
+      "stage3": {
+        "model": "google/gemini-2.5-flash-lite",
+        "response": "Error: Unable to generate final synthesis."
+      }
     }
   ],
   "client_id": "42aad638-75ac-427d-9f9c-608ba12053ac"
