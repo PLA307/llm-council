@@ -49,7 +49,7 @@ async def query_model(
                     "model": model,
                     "messages": messages,
                     "temperature": 0.7,
-                    "max_tokens": 1024,
+                    "max_tokens": 4096,  # Increased from 1024 to 4096
                     "timeout": timeout
                 },
                 timeout=timeout
