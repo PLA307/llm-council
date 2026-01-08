@@ -7,10 +7,26 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from .config import DATA_DIR
-from .github_storage import GitHubStorage
 
-# Initialize GitHub Storage Adapter
-github_storage = GitHubStorage()
+try:
+    from .github_storage import GitHubStorage
+    # Initialize GitHub Storage Adapter
+    github_storage = GitHubStorage()
+except ImportError:
+    print("WARNING: GitHub storage dependencies not found. GitHub storage disabled.")
+    # Create a mock GitHubStorage with enabled=False
+    class MockGitHubStorage:
+        def __init__(self):
+            self.enabled = False
+        def save_file(self, *args, **kwargs):
+            return False
+        def get_file(self, *args, **kwargs):
+            return None
+        def list_files(self, *args, **kwargs):
+            return []
+        def delete_file(self, *args, **kwargs):
+            return False
+    github_storage = MockGitHubStorage()
 
 def ensure_data_dir():
     """Ensure the data directory exists."""
