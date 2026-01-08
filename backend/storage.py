@@ -83,39 +83,58 @@ def create_conversation(conversation_id: str, client_id: Optional[str] = None) -
     return conversation
 
 
+def _sync_remote_conversation_background(conversation_id: str):
+    """
+    Background task to sync a single conversation from GitHub.
+    If found, caches it locally for future use.
+    """
+    if not github_storage.enabled:
+        return
+    
+    try:
+        filename = f"{conversation_id}.json"
+        conversation = github_storage.get_file(filename)
+        # If found in GitHub, cache locally
+        if conversation:
+            ensure_data_dir()
+            path = get_conversation_path(conversation_id)
+            with open(path, 'w') as f:
+                json.dump(conversation, f, indent=2)
+    except Exception as e:
+        print(f"Error syncing remote conversation {conversation_id} in background: {e}")
+
+
 def get_conversation(conversation_id: str, client_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     Load a conversation from storage.
-    Tries local first, then GitHub if not found locally (and syncs back).
+    Tries local first, and returns None if not found locally (syncs from GitHub in background).
     
     Args:
         conversation_id: Unique identifier for the conversation
         client_id: Optional client identifier for verification
         
     Returns:
-        Conversation dict or None if not found or unauthorized
+        Conversation dict or None if not found locally or unauthorized
     """
     path = get_conversation_path(conversation_id)
     conversation = None
 
-    # Try local storage first
+    # Try local storage first for fast response
     if os.path.exists(path):
         with open(path, 'r') as f:
             conversation = json.load(f)
-    
-    # If not found locally, try GitHub
-    if conversation is None and github_storage.enabled:
-        print(f"Conversation {conversation_id} not found locally, checking GitHub...")
-        conversation = github_storage.get_file(f"{conversation_id}.json")
-        # If found in GitHub, cache locally
-        if conversation:
-            ensure_data_dir()
-            with open(path, 'w') as f:
-                json.dump(conversation, f, indent=2)
-
-    if conversation is None:
+    else:
+        # If not found locally, sync from GitHub in background
+        if github_storage.enabled:
+            print(f"Conversation {conversation_id} not found locally, syncing from GitHub in background...")
+            thread = threading.Thread(
+                target=_sync_remote_conversation_background,
+                args=(conversation_id,)
+            )
+            thread.start()
+        # Return None immediately, don't block waiting for GitHub
         return None
-        
+
     # Check ownership if client_id is provided and conversation has an owner
     if client_id and conversation.get("client_id") and conversation.get("client_id") != client_id:
         return None
@@ -158,10 +177,31 @@ def save_conversation(conversation: Dict[str, Any]):
         thread.start()
 
 
+def _sync_remote_conversations_background():
+    """Background task to sync remote conversations from GitHub."""
+    if not github_storage.enabled:
+        return
+    
+    try:
+        remote_files = github_storage.list_files()
+        for filename in remote_files:
+            conv_id = filename.replace(".json", "")
+            local_path = os.path.join(DATA_DIR, filename)
+            # Only fetch if local file doesn't exist or is older than a certain time
+            if not os.path.exists(local_path):
+                # Fetch full content and cache locally
+                data = github_storage.get_file(filename)
+                if data:
+                    with open(local_path, 'w') as f:
+                        json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Error syncing remote conversations in background: {e}")
+
+
 def list_conversations(client_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     List all conversations (metadata only).
-    Merges local files with GitHub files.
+    Uses only local files for fast response, syncs with GitHub in background.
     
     Args:
         client_id: Optional client identifier to filter conversations
@@ -171,10 +211,10 @@ def list_conversations(client_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     ensure_data_dir()
     
-    # Use a dict to merge local and remote conversations by ID
+    # Use a dict to store conversations
     conversations_map = {}
 
-    # 1. Read local files
+    # 1. Read only local files for fast response
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.json'):
             path = os.path.join(DATA_DIR, filename)
@@ -186,27 +226,10 @@ def list_conversations(client_id: Optional[str] = None) -> List[Dict[str, Any]]:
                 print(f"Error reading local conversation {filename}: {e}")
                 continue
                 
-    # 2. List remote files (if enabled)
-    # Note: This is an expensive operation, in a real production app we'd use a database.
-    # For this hackathon project, we'll try to rely on local cache + occasional sync
-    # Or optimize by listing files from GitHub API
+    # 2. Sync with GitHub in background (non-blocking)
     if github_storage.enabled:
-        try:
-            remote_files = github_storage.list_files()
-            for filename in remote_files:
-                conv_id = filename.replace(".json", "")
-                # If not in local, fetch it (lazy loading metadata would be better but requires refactoring)
-                # Optimization: For list view, we might need to fetch content if we don't have metadata index
-                if conv_id not in conversations_map:
-                    # Fetch full content to get metadata (slow but correct)
-                    data = github_storage.get_file(filename)
-                    if data:
-                        conversations_map[conv_id] = data
-                        # Cache locally
-                        with open(os.path.join(DATA_DIR, filename), 'w') as f:
-                            json.dump(data, f, indent=2)
-        except Exception as e:
-            print(f"Error listing remote conversations: {e}")
+        thread = threading.Thread(target=_sync_remote_conversations_background)
+        thread.start()
 
     # 3. Filter and Format
     results = []
@@ -291,9 +314,21 @@ def update_conversation_title(conversation_id: str, title: str):
     save_conversation(conversation)
 
 
+def _delete_remote_conversation_background(conversation_id: str):
+    """Background task to delete conversation from GitHub."""
+    if not github_storage.enabled:
+        return
+    
+    try:
+        github_storage.delete_file(f"{conversation_id}.json")
+    except Exception as e:
+        print(f"Error deleting remote conversation in background: {e}")
+
+
 def delete_conversation(conversation_id: str) -> bool:
     """
     Delete a conversation from storage.
+    Deletes locally immediately, deletes from GitHub in background.
     """
     path = get_conversation_path(conversation_id)
     local_deleted = False
@@ -302,8 +337,12 @@ def delete_conversation(conversation_id: str) -> bool:
         os.remove(path)
         local_deleted = True
         
-    remote_deleted = False
+    # Delete from GitHub in background (non-blocking)
     if github_storage.enabled:
-        remote_deleted = github_storage.delete_file(f"{conversation_id}.json")
+        thread = threading.Thread(
+            target=_delete_remote_conversation_background,
+            args=(conversation_id,)
+        )
+        thread.start()
         
-    return local_deleted or remote_deleted
+    return local_deleted
