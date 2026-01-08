@@ -20,8 +20,11 @@ STORAGE_PATH = "data/conversations"
 
 class GitHubStorage:
     def __init__(self):
-        if not GITHUB_TOKEN or not GITHUB_REPO:
-            print("WARNING: GITHUB_TOKEN or GITHUB_REPO not set. GitHub storage disabled.")
+        # 添加环境变量开关，默认关闭GitHub同步
+        ENABLE_GITHUB_SYNC = os.getenv("ENABLE_GITHUB_SYNC", "false").lower() == "true"
+        
+        if not ENABLE_GITHUB_SYNC or not GITHUB_TOKEN or not GITHUB_REPO:
+            print("GitHub Storage disabled (either ENABLE_GITHUB_SYNC=false, or GITHUB_TOKEN/GITHUB_REPO not set).")
             self.enabled = False
         else:
             self.enabled = True
