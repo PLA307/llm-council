@@ -72,13 +72,8 @@ def create_conversation(conversation_id: str, client_id: Optional[str] = None) -
     with open(path, 'w') as f:
         json.dump(conversation, f, indent=2)
 
-    # Sync to GitHub (Async)
-    if github_storage.enabled:
-        thread = threading.Thread(
-            target=_sync_to_github_background,
-            args=(f"{conversation_id}.json", conversation, f"Create conversation {conversation_id}")
-        )
-        thread.start()
+    # 不立即同步到GitHub，等有助手消息时再同步
+    # 这样可以避免创建空对话时就触发部署
 
     return conversation
 
@@ -142,10 +137,14 @@ def get_conversation(conversation_id: str, client_id: Optional[str] = None) -> O
     return conversation
 
 
+# 添加全局变量用于跟踪对话的最后更新时间和待处理的同步任务
+conversation_update_timers = {}
+
+
 def save_conversation(conversation: Dict[str, Any]):
     """
     Save a conversation to storage.
-    Writes to local disk immediately and GitHub asynchronously.
+    Writes to local disk immediately and GitHub asynchronously with rate limiting.
     
     Args:
         conversation: Conversation dict to save
@@ -158,23 +157,22 @@ def save_conversation(conversation: Dict[str, Any]):
     with open(path, 'w') as f:
         json.dump(conversation, f, indent=2)
         
-    # Sync to GitHub (Async background task)
+    # 仅在对话结束时同步到GitHub：当收到助手消息时
     if github_storage.enabled:
-        # Determine message type based on last message
-        msg = f"Update conversation {conversation_id}"
         if conversation.get("messages"):
             last_msg = conversation["messages"][-1]
-            if last_msg.get("role") == "user":
-                msg = f"User message in {conversation_id}"
-            elif last_msg.get("role") == "assistant":
+            # 只有当最后一条消息是助手消息时才同步到GitHub
+            # 这样可以避免每次用户输入都触发同步，减少部署频率
+            if last_msg.get("role") == "assistant":
+                # Determine message type based on last message
                 msg = f"Assistant response in {conversation_id}"
-        
-        # Run in a separate thread to avoid blocking the response
-        thread = threading.Thread(
-            target=_sync_to_github_background,
-            args=(f"{conversation_id}.json", conversation, msg)
-        )
-        thread.start()
+                
+                # Run in a separate thread to avoid blocking the response
+                thread = threading.Thread(
+                    target=_sync_to_github_background,
+                    args=(f"{conversation_id}.json", conversation, msg)
+                )
+                thread.start()
 
 
 def _sync_remote_conversations_background():
